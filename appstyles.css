@@ -71,7 +71,7 @@ body {
 .volume-cont {
     background-color: rgba(127, 255, 212, 0.369);
     width: 50px;
-    height: 120px;
+    height: 170px; /* Adjusts Height 2*/
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -79,10 +79,76 @@ body {
 
 .volume-slider-cont {
     flex: 2;
-    max-height: 100px; /* Adjusts Height */
+    max-height: 200px; /* Adjusts Height */
     background-color: blueviolet;
     display: grid;
     place-items: center;
+}
+
+
+.volume-slider {
+    -webkit-appearance: none; /* Chromium */
+    appearance: none;
+    height: 5px;
+    width: 90px;
+    border-radius: 5px;
+    z-index: 1;
+    transform: rotate(90deg);
+    translate: -20px;
+}
+
+input[type=range]::-webkit-slider-runnable-track{
+    background: white;
+    border: none;
+    height: 5px;
+    width: 90px;
+    border-radius: 3px;
+}
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    border: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: white;
+    margin-top: -5px;
+}
+input[type=range]:focus {
+    outline: none;
+}
+input[type=range]:focus::-webkit-slider-runnable-track {
+    background: white;
+}
+
+
+
+input[type=range]{
+    /* fix for FF unable to apply focus style bug  */
+    border: 1px solid white;
+    border: none;
+    height: 5px;
+    width: 90px;
+}
+input[type=range]::-moz-range-track {
+    height: 5px;
+    width: 90px;
+    background: white;
+    border: none;
+    border-radius: 5px;
+}
+input[type=range]::-moz-range-thumb {
+    border: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: white;
+}
+input[type=range]:-moz-focusring{
+    outline: 1px solid white;
+    outline-offset: -1px;
+}
+input[type=range]:focus::-moz-range-track {
+    background: #ffffff;
 }
 
 .volume-icon {
@@ -95,11 +161,7 @@ body {
 
 }
 
-input[type="range"] {
-    appearance: slider-vertical;
-    height: 100%;
-}
-  
+
 
 .main-column {
     background-color: rgb(112, 56, 201);
@@ -120,12 +182,23 @@ input[type="range"] {
     max-height: 640px;
     /* background-color: rgb(235, 51, 255); */
     overflow: scroll;
-    scrollbar-width: none;
+
+    scrollbar-color: red;
 
     background: none;
     /* overflow: hidden; */
     -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 99%);
     mask-image: linear-gradient(to bottom, black 80%, transparent 99%);
+}
+
+.para-block::-webkit-scrollbar{
+    display: none;
+}
+
+@supports(scrollbar-width: none){
+    * {
+        scrollbar-width: none;
+    }
 }
 
 .page-para p {
