@@ -73,7 +73,8 @@ body {
 }
 
 .volume-cont {
-    background-color: rgba(127, 255, 212, 0.369);
+    animation: none;
+    /* background-color: rgba(127, 255, 212, 0.369); */
     width: 50px;
     height: 170px; /* Adjusts Height 170-50*/
     display: flex;
@@ -94,7 +95,7 @@ body {
     -webkit-appearance: none; /* Chromium */
     appearance: none;
     height: 5px;
-    width: 90px;
+    width: 91px;
     border-radius: 5px;
     z-index: 1;
     transform: rotate(90deg);
@@ -105,7 +106,7 @@ input[type=range]::-webkit-slider-runnable-track{
     background: white;
     border: none;
     height: 5px;
-    width: 90px;
+    width: 91px;
     border-radius: 3px;
 }
 input[type=range]::-webkit-slider-thumb {
@@ -128,14 +129,15 @@ input[type=range]:focus::-webkit-slider-runnable-track {
 
 input[type=range]{
     /* fix for FF unable to apply focus style bug  */
+    animation: none;
     border: 1px solid white;
     border: none;
     height: 5px;
-    width: 90px;
+    width: 91px;
 }
 input[type=range]::-moz-range-track {
     height: 5px;
-    width: 90px;
+    width: 91px;
     background: white;
     border: none;
     border-radius: 5px;
@@ -171,7 +173,7 @@ input[type=range]:focus::-moz-range-track {
 }
 
 .s-button-cont {
-    background-color: rgba(250, 235, 215, 0.215);
+    /* background-color: rgba(250, 235, 215, 0.215); */
     width: 50px;
     height: 50px;
     display: grid;
@@ -191,12 +193,69 @@ input[type=range]:focus::-moz-range-track {
     bottom: 0;
     width: 60px;
     height: 300px;
-    background-color: rgb(217, 255, 0, 0.5);
+    /* background-color: rgb(217, 255, 0, 0.5); */
 }
 
 #svg5803 {
     width: auto;
     height: 100%;
+}
+
+@keyframes hide_slider {
+    0% {
+        height: 150px;
+        margin-top: 30px;
+    }
+    100% {
+        height: 50px;
+    }
+}
+@keyframes show_slider {
+    0% {
+        height: 50px;
+    }
+    100% {
+        height: 150px;
+        margin-top: 30px;
+    }
+}
+
+@keyframes grow_sb {
+    0%{
+        max-height: 170px;
+    }
+    100%{
+        max-height: 300px;
+    }
+}
+@keyframes shrink_sb {
+    0%{
+        max-height: 300px;
+    }
+    100%{
+        max-height: 170px;
+    }
+}
+
+@keyframes grow_track {
+    0%{
+        width: 41px;
+        translate: 2px;
+    }
+    100%{
+        width: 91px;
+        translate: -23px;
+    }
+}
+@keyframes shrink_track {
+    0%{
+        width: 91px;
+        translate: -23px;
+    }
+    100%{
+        width: 41px;
+        translate: 2px;
+    }
 }
 
 
