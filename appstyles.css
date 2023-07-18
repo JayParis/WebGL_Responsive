@@ -64,7 +64,42 @@ body {
     height: 100%;
     max-height: 300px;
     align-self: flex-end;
+    display: grid;
+    place-items: center;
 }
+
+.volume-cont {
+    background-color: rgba(127, 255, 212, 0.369);
+    width: 50px;
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.volume-slider-cont {
+    flex: 2;
+    max-height: 100px; /* Adjusts Height */
+    background-color: blueviolet;
+    display: grid;
+    place-items: center;
+}
+
+.volume-icon {
+    flex: 1;
+    background-color: burlywood;
+    width: 50px;
+    height: 50px;
+    max-height: 50px;
+    min-height: 50px;
+
+}
+
+input[type="range"] {
+    appearance: slider-vertical;
+    height: 100%;
+}
+  
 
 .main-column {
     background-color: rgb(112, 56, 201);
