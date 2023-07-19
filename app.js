@@ -1,5 +1,7 @@
 var toggleHover = false;
 
+const root = document.querySelector(':root');
+
 function LoadedPage(){
     document.getElementById('pb-id').addEventListener(
         'scroll',
@@ -14,24 +16,42 @@ function LoadedPage(){
             if (contentHeight <= scrollTop)
             {
                 console.log("Scroll end");
+                root.style.setProperty('--p0', 'transparent');
+                root.style.setProperty('--p1', 'black');
+
                 /*
                 para.style.animation = "fade_para_top";
                 para.style.animationTimingFunction = "linear";
                 para.style.animationFillMode = "both";
                 para.style.animationDuration = "0.25s";
                 */
+                //document.documentElement.style.setProperty('--p1', '#000000');
+                //document.documentElement.style.setProperty('--p0', '#000000');
                 
+                // document.documentElement.style.animation = "fade_para_top";
+                // document.documentElement.style.animationTimingFunction = "linear";
+                // document.documentElement.style.animationFillMode = "both";
+                // document.documentElement.style.animationDuration = "0.25s";
             }
             if (scrollTop <= 0)
             {
                 console.log("Scroll top");
+                root.style.setProperty('--p0', 'black');
+                root.style.setProperty('--p1', 'transparent');
+
                 /*
                 para.style.animation = "fade_para_bottom";
                 para.style.animationTimingFunction = "linear";
                 para.style.animationFillMode = "both";
                 para.style.animationDuration = "0.25s";
                 */
+                //document.documentElement.style.setProperty('--p0', '#000000');
+                //document.documentElement.style.setProperty('--p1', '#000000');
                 
+                //document.documentElement.style.animation = "fade_para_bottom";
+                //document.documentElement.style.animationTimingFunction = "linear";
+                //document.documentElement.style.animationFillMode = "both";
+                //document.documentElement.style.animationDuration = "0.25s";
             }
         },
         false
