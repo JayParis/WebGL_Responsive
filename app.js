@@ -1,5 +1,43 @@
 var toggleHover = false;
 
+function LoadedPage(){
+    document.getElementById('pb-id').addEventListener(
+        'scroll',
+        function()
+        {
+            let para = document.getElementById('pb-id');
+            var scrollTop = para.scrollTop;
+            var scrollHeight = para.scrollHeight; // added
+            var offsetHeight = para.offsetHeight;
+            // var clientHeight = document.getElementById('box').clientHeight;
+            var contentHeight = scrollHeight - offsetHeight; // added
+            if (contentHeight <= scrollTop)
+            {
+                console.log("Scroll end");
+                /*
+                para.style.animation = "fade_para_top";
+                para.style.animationTimingFunction = "linear";
+                para.style.animationFillMode = "both";
+                para.style.animationDuration = "0.25s";
+                */
+                
+            }
+            if (scrollTop <= 0)
+            {
+                console.log("Scroll top");
+                /*
+                para.style.animation = "fade_para_bottom";
+                para.style.animationTimingFunction = "linear";
+                para.style.animationFillMode = "both";
+                para.style.animationDuration = "0.25s";
+                */
+                
+            }
+        },
+        false
+    );
+}
+
 function ContButtonClicked(){
     console.log("ContButtonClicked");
 
@@ -41,4 +79,6 @@ function ContButtonClicked(){
     vs.style.animationFillMode = "both";
     vs.style.animationDuration = "0.25s";
 
+    
 }
+
