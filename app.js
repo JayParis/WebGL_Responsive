@@ -1,6 +1,7 @@
 var toggleHover = false;
 
 const root = document.querySelector(':root');
+var fadeState = 2;
 
 function LoadedPage(){
     document.getElementById('pb-id').addEventListener(
@@ -13,45 +14,25 @@ function LoadedPage(){
             var offsetHeight = para.offsetHeight;
             // var clientHeight = document.getElementById('box').clientHeight;
             var contentHeight = scrollHeight - offsetHeight; // added
-            if (contentHeight <= scrollTop)
+            if (contentHeight <= scrollTop && fadeState != 0)
             {
                 console.log("Scroll end");
                 root.style.setProperty('--p0', 'transparent');
                 root.style.setProperty('--p1', 'black');
-
-                /*
-                para.style.animation = "fade_para_top";
-                para.style.animationTimingFunction = "linear";
-                para.style.animationFillMode = "both";
-                para.style.animationDuration = "0.25s";
-                */
-                //document.documentElement.style.setProperty('--p1', '#000000');
-                //document.documentElement.style.setProperty('--p0', '#000000');
-                
-                // document.documentElement.style.animation = "fade_para_top";
-                // document.documentElement.style.animationTimingFunction = "linear";
-                // document.documentElement.style.animationFillMode = "both";
-                // document.documentElement.style.animationDuration = "0.25s";
+                fadeState = 0;
             }
-            if (scrollTop <= 0)
+            if (scrollTop <= 0 && fadeState != 2)
             {
                 console.log("Scroll top");
                 root.style.setProperty('--p0', 'black');
                 root.style.setProperty('--p1', 'transparent');
-
-                /*
-                para.style.animation = "fade_para_bottom";
-                para.style.animationTimingFunction = "linear";
-                para.style.animationFillMode = "both";
-                para.style.animationDuration = "0.25s";
-                */
-                //document.documentElement.style.setProperty('--p0', '#000000');
-                //document.documentElement.style.setProperty('--p1', '#000000');
-                
-                //document.documentElement.style.animation = "fade_para_bottom";
-                //document.documentElement.style.animationTimingFunction = "linear";
-                //document.documentElement.style.animationFillMode = "both";
-                //document.documentElement.style.animationDuration = "0.25s";
+                fadeState = 2;
+            }
+            if( scrollTop >= 10 && contentHeight >= (scrollTop + 10)  && fadeState != 1){
+                console.log("Scroll middle");
+                root.style.setProperty('--p0', 'transparent');
+                root.style.setProperty('--p1', 'transparent');
+                fadeState = 1;
             }
         },
         false
@@ -98,7 +79,5 @@ function ContButtonClicked(){
     vs.style.animationTimingFunction = "cubic-bezier(.17,.67,.83,.67)"; // cubic-bezier(.42,0,.58,1)
     vs.style.animationFillMode = "both";
     vs.style.animationDuration = "0.25s";
-
-    
 }
 
