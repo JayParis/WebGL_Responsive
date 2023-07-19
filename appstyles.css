@@ -92,6 +92,8 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
+    z-index: 2;
+
 }
 
 .volume-slider-cont {
@@ -191,6 +193,7 @@ input[type=range]:focus::-moz-range-track {
     display: grid;
     place-items: center;
     margin-top: -20px;
+    z-index: 2;
 }
 
 .settings-svg-cont {
@@ -286,9 +289,8 @@ input[type=range]:focus::-moz-range-track {
 }
 
 
-
 .main-column {
-    background-color: rgb(112, 56, 201);
+    background-color: rgb(56, 201, 153);
     height: 100%;
     flex: 2;
 }
