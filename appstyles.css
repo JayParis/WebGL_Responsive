@@ -3,8 +3,15 @@
     --p1: transparent;
     --settings-icon: #ffffff33;
     --settings-icon-hover: #ffffff80;
+    
     --exit-icon: #ff737337;
     --exit-icon-hover: #ff737380;
+
+    --replay-icon: #ffffff33;
+    --replay-icon-hover: #ffffff80;
+
+    --pause-icon: #ffffff33;
+    --pause-icon-hover: #ffffff80;
 }
 
 body {
@@ -89,20 +96,25 @@ body {
     margin-right: 35px;
 }
 
-.replay-svg-cont {
-    width: 33px;
-}
-#path11457 {
-    fill: var(--settings-icon) !important;
-}
-
-
 .pause-svg-cont {
     width: 33px;
 }
 #path1695 {
-    fill: var(--settings-icon) !important;
+    fill: var(--replay-icon);
+    pointer-events: none;
 }
+@keyframes pause_hover { 0% { fill: var(--pause-icon); } 100% { fill: var(--pause-icon-hover); } }
+@keyframes pause_unhover { 0% { fill: var(--pause-icon-hover); } 100% { fill: var(--pause-icon); } }
+
+.replay-svg-cont {
+    width: 33px;
+}
+#path11457 {
+    fill: var(--pause-icon);
+    pointer-events: none;
+}
+@keyframes replay_hover { 0% { fill: var(--replay-icon); } 100% { fill: var(--replay-icon-hover); } }
+@keyframes replay_unhover { 0% { fill: var(--replay-icon-hover); } 100% { fill: var(--replay-icon); } }
 
 .volume-cont {
     animation: none;
@@ -233,6 +245,7 @@ input[type=range]:focus::-moz-range-track {
     margin-bottom: -13px;
     display: grid;
     place-items: center;
+    
 }
 @keyframes vc_spacing_hover { 0% { margin-bottom: -13px; } 100% { margin-bottom: -49px; } }
 @keyframes vc_spacing_unhover { 0% { margin-bottom: -49px; } 100% { margin-bottom: -13px; } }

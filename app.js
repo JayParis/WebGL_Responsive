@@ -60,66 +60,102 @@ function LoadedPage() {
         hoverChangeDelay = 0.1;
     }, false);
 
-
-    let hsid = document.getElementById("hover-settings-id");
+    /*
     let settingsPath = document.getElementById('path3969');
     settingsPath.style.fill = getComputedStyle(document.documentElement).getPropertyValue('--settings-icon');
-    // console.log(getComputedStyle(document.documentElement).getPropertyValue('--settings-icon'));
+    let hsid = document.getElementById("hover-settings-id");
 
     hsid.addEventListener('mouseover', function(){
-        console.log("Entered Settings");
-
         let settingsPath = document.getElementById('path3969');
-        settingsPath.style.animation = "settings_hover";
-        settingsPath.style.animationTimingFunction = "linear";
-        settingsPath.style.animationFillMode = "both";
-        settingsPath.style.animationDuration = "0.15s";
-
+        PlayIconAnimation(settingsPath,"settings_hover", "0.15s");
         //root.style.setProperty('--settings-icon', '#ffffff80');
     }, false);
     hsid.addEventListener('mouseout', function(){
-        console.log("Exit");
-
         let settingsPath = document.getElementById('path3969');
-        settingsPath.style.animation = "settings_unhover";
-        settingsPath.style.animationTimingFunction = "linear";
-        settingsPath.style.animationFillMode = "both";
-        settingsPath.style.animationDuration = "0.15s";
-
+        PlayIconAnimation(settingsPath,"settings_unhover", "0.15s");
         //root.style.setProperty('--settings-icon', '#ffffff33');
     }, false);
 
-
-
-    let heid = document.getElementById("hover-exit-id");
     let exitPath = document.getElementById('path4373');
     exitPath.style.fill = getComputedStyle(document.documentElement).getPropertyValue('--exit-icon');
+    let heid = document.getElementById("hover-exit-id");
     heid.addEventListener('mouseover', function(){
-        console.log("Entered Settings");
-
         let exitPath = document.getElementById('path4373');
-        exitPath.style.animation = "exit_hover";
-        exitPath.style.animationTimingFunction = "linear";
-        exitPath.style.animationFillMode = "both";
-        exitPath.style.animationDuration = "0.15s";
+        PlayIconAnimation(exitPath,"exit_hover", "0.15s");
+
     }, false);
     heid.addEventListener('mouseout', function(){
-        console.log("Exit");
-
         let exitPath = document.getElementById('path4373');
-        exitPath.style.animation = "exit_unhover";
-        exitPath.style.animationTimingFunction = "linear";
-        exitPath.style.animationFillMode = "both";
-        exitPath.style.animationDuration = "0.15s";
+        PlayIconAnimation(exitPath,"exit_unhover", "0.15s");
+
+    }, false);
+
+    let pausePath = document.getElementById('path11457');
+    pausePath.style.fill = getComputedStyle(document.documentElement).getPropertyValue('--pause-icon');
+    let hpid = document.getElementById("hover-pause-id");
+    hpid.addEventListener('mouseover', function(){
+        console.log("Pause Hover");
+        let pausePath = document.getElementById('path11457');
+        PlayIconAnimation(pausePath,"pause_hover", "0.15s");
+
+    }, false);
+    hpid.addEventListener('mouseout', function(){
+        console.log("Pause Exit");
+        let pausePath = document.getElementById('path11457');
+        PlayIconAnimation(pausePath,"pause_unhover", "0.15s");
+
     }, false);
 
 
+    let replayPath = document.getElementById('path1695');
+    replayPath.style.fill = getComputedStyle(document.documentElement).getPropertyValue('--pause-icon');
+    let hrid = document.getElementById("hover-replay-id");
+    hrid.addEventListener('mouseover', function(){
+        console.log("Pause Hover");
+        let replayPath = document.getElementById('path1695');
+        PlayIconAnimation(replayPath,"replay_hover", "0.15s");
 
+    }, false);
+    hrid.addEventListener('mouseout', function(){
+        console.log("Pause Exit");
+        let replayPath = document.getElementById('path1695');
+        PlayIconAnimation(replayPath,"replay_unhover", "0.15s");
 
+    }, false);
+    */
 
+    SetUpIconEvent('path3969', 'hover-settings-id', '--settings-icon','settings');
+    SetUpIconEvent('path4373', 'hover-exit-id', '--exit-icon', 'exit');
+    SetUpIconEvent('path11457', 'hover-pause-id', '--pause-icon', 'pause');
+    SetUpIconEvent('path1695', 'hover-replay-id', '--replay-icon', 'replay');
     RunApp();
 }
 
+function SetUpIconEvent(pathID, hoverID, varName, animName, timing){
+    var path = document.getElementById(pathID);
+    path.style.fill = getComputedStyle(document.documentElement).getPropertyValue(varName);
+    let hrid = document.getElementById(hoverID);
+    hrid.addEventListener('mouseover', function(){
+        path.style.animation = animName + "_hover";
+        path.style.animationTimingFunction = timing;
+        path.style.animationFillMode = "both";
+        path.style.animationDuration = "0.15s";
+    }, false);
+    hrid.addEventListener('mouseout', function(){
+        path.style.animation = animName + "_unhover";
+        path.style.animationTimingFunction = timing;
+        path.style.animationFillMode = "both";
+        path.style.animationDuration = "0.15s";
+    }, false);
+}
+/*
+function PlayIconAnimation(elmnt, animName, timing){
+    elmnt.style.animation = animName;
+    elmnt.style.animationTimingFunction = timing;
+    elmnt.style.animationFillMode = "both";
+    elmnt.style.animationDuration = "0.15s";
+}
+*/
 function ContButtonClicked(){
     console.log("ContButtonClicked");
 
