@@ -1,6 +1,8 @@
 :root {
     --p0: black;
     --p1: transparent;
+    --settings-icon: #ffffff33;
+    --settings-icon-hover: #ffffff80;
 }
 
 body {
@@ -22,7 +24,7 @@ body {
     background-image: url('Images/BG_Blur_1.webp');
     /*background-repeat: no-repeat;*/
     background-size: cover;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.65);
     background-blend-mode: multiply;
 
     position:absolute;
@@ -216,15 +218,24 @@ input[type=range]:focus::-moz-range-track {
     width: auto;
     height: 100%;
 }
-
 #path5649 {
     fill: rgba(255, 255, 255, 0.1) !important;
 }
-#path3969 {
-    fill: rgba(255, 255, 255, 0.2) !important;
+
+
+#path2820{
+    fill: rgba(255, 255, 255, 0.91) !important;
 }
+#path3969 { /*Settings Icon*/
+    fill: var(--settings-icon);
+    pointer-events: none;
+}
+@keyframes settings_hover { 0% { fill: var(--settings-icon); } 100% { fill: var(--settings-icon-hover); } }
+@keyframes settings_unhover { 0% { fill: var(--settings-icon-hover); } 100% { fill: var(--settings-icon); } }
+
 #path4373 {
     fill: rgba(255, 115, 115, 0.215) !important;
+    pointer-events: none;
 }
 
 @keyframes hide_slider {
@@ -290,7 +301,7 @@ input[type=range]:focus::-moz-range-track {
 
 
 .main-column {
-    background-color: rgb(56, 201, 153);
+    background-color: rgb(158, 84, 107);
     height: 100%;
     flex: 2;
 }

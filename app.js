@@ -45,19 +45,48 @@ function LoadedPage() {
     });
     */
     
-    let hsid = document.getElementById("vc-id");
-    hsid.addEventListener('mouseover', function(){
+    let vcid = document.getElementById("vc-id");
+    vcid.addEventListener('mouseover', function(){
         //console.log("Mouse Entered");
         hovered = true;
         needsHoverChange = true;
         hoverChangeDelay = 0.1;
     }, false);
-    hsid.addEventListener('mouseout', function(){
+    vcid.addEventListener('mouseout', function(){
         //console.log("Mouse Exit");
         hovered = false;
         needsHoverChange = true;
         hoverChangeDelay = 0.1;
     }, false);
+
+
+    let hsid = document.getElementById("hover-settings-id");
+    hsid.addEventListener('mouseover', function(){
+        console.log("Entered Settings");
+
+        let settingsPath = document.getElementById('path3969');
+        settingsPath.style.animation = "settings_hover";
+        settingsPath.style.animationTimingFunction = "linear";
+        settingsPath.style.animationFillMode = "both";
+        settingsPath.style.animationDuration = "0.25s";
+
+        //root.style.setProperty('--settings-icon', '#ffffff80');
+    }, false);
+    hsid.addEventListener('mouseout', function(){
+        console.log("Exit");
+
+        let settingsPath = document.getElementById('path3969');
+        settingsPath.style.animation = "settings_unhover";
+        settingsPath.style.animationTimingFunction = "linear";
+        settingsPath.style.animationFillMode = "both";
+        settingsPath.style.animationDuration = "0.25s";
+
+        //root.style.setProperty('--settings-icon', '#ffffff33');
+    }, false);
+
+
+
+
 
     RunApp();
 }
