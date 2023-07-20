@@ -3,6 +3,8 @@
     --p1: transparent;
     --settings-icon: #ffffff33;
     --settings-icon-hover: #ffffff80;
+    --exit-icon: #ff737337;
+    --exit-icon-hover: #ff737380;
 }
 
 body {
@@ -234,9 +236,12 @@ input[type=range]:focus::-moz-range-track {
 @keyframes settings_unhover { 0% { fill: var(--settings-icon-hover); } 100% { fill: var(--settings-icon); } }
 
 #path4373 {
-    fill: rgba(255, 115, 115, 0.215) !important;
+    fill: rgba(255, 115, 115, 0.215);
     pointer-events: none;
 }
+@keyframes exit_hover { 0% { fill: var(--exit-icon); } 100% { fill: var(--exit-icon-hover); } }
+@keyframes exit_unhover { 0% { fill: var(--exit-icon-hover); } 100% { fill: var(--exit-icon); } }
+
 
 @keyframes hide_slider {
     0% {

@@ -68,7 +68,7 @@ function LoadedPage() {
         settingsPath.style.animation = "settings_hover";
         settingsPath.style.animationTimingFunction = "linear";
         settingsPath.style.animationFillMode = "both";
-        settingsPath.style.animationDuration = "0.25s";
+        settingsPath.style.animationDuration = "0.15s";
 
         //root.style.setProperty('--settings-icon', '#ffffff80');
     }, false);
@@ -79,9 +79,31 @@ function LoadedPage() {
         settingsPath.style.animation = "settings_unhover";
         settingsPath.style.animationTimingFunction = "linear";
         settingsPath.style.animationFillMode = "both";
-        settingsPath.style.animationDuration = "0.25s";
+        settingsPath.style.animationDuration = "0.15s";
 
         //root.style.setProperty('--settings-icon', '#ffffff33');
+    }, false);
+
+
+
+    let heid = document.getElementById("hover-exit-id");
+    heid.addEventListener('mouseover', function(){
+        console.log("Entered Settings");
+
+        let exitPath = document.getElementById('path4373');
+        exitPath.style.animation = "exit_hover";
+        exitPath.style.animationTimingFunction = "linear";
+        exitPath.style.animationFillMode = "both";
+        exitPath.style.animationDuration = "0.15s";
+    }, false);
+    heid.addEventListener('mouseout', function(){
+        console.log("Exit");
+
+        let exitPath = document.getElementById('path4373');
+        exitPath.style.animation = "exit_unhover";
+        exitPath.style.animationTimingFunction = "linear";
+        exitPath.style.animationFillMode = "both";
+        exitPath.style.animationDuration = "0.15s";
     }, false);
 
 
