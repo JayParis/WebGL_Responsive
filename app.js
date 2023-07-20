@@ -49,8 +49,9 @@ function LoadedPage() {
     vcid.addEventListener('mouseover', function(){
         //console.log("Mouse Entered");
         hovered = true;
+        if(hoverChangeDelay > 0)
+            hoverChangeDelay = 0.1;
         needsHoverChange = true;
-        hoverChangeDelay = 0.1;
     }, false);
     vcid.addEventListener('mouseout', function(){
         //console.log("Mouse Exit");
@@ -61,6 +62,10 @@ function LoadedPage() {
 
 
     let hsid = document.getElementById("hover-settings-id");
+    let settingsPath = document.getElementById('path3969');
+    settingsPath.style.fill = getComputedStyle(document.documentElement).getPropertyValue('--settings-icon');
+    // console.log(getComputedStyle(document.documentElement).getPropertyValue('--settings-icon'));
+
     hsid.addEventListener('mouseover', function(){
         console.log("Entered Settings");
 
@@ -87,6 +92,8 @@ function LoadedPage() {
 
 
     let heid = document.getElementById("hover-exit-id");
+    let exitPath = document.getElementById('path4373');
+    exitPath.style.fill = getComputedStyle(document.documentElement).getPropertyValue('--exit-icon');
     heid.addEventListener('mouseover', function(){
         console.log("Entered Settings");
 
@@ -156,6 +163,12 @@ function ToggleHoverState(hov){
     vs.style.animationTimingFunction = "cubic-bezier(.17,.67,.83,.67)"; // cubic-bezier(.42,0,.58,1)
     vs.style.animationFillMode = "both";
     vs.style.animationDuration = "0.25s";
+
+    let vidc = document.getElementById("video-controls-id");
+    vidc.style.animation = hov ? "vc_spacing_hover" : "vc_spacing_unhover";
+    vidc.style.animationTimingFunction = "cubic-bezier(.17,.67,.83,.67)"; // cubic-bezier(.42,0,.58,1)
+    vidc.style.animationFillMode = "both";
+    vidc.style.animationDuration = "0.25s";
 }
 
 function RunApp(){
