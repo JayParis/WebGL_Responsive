@@ -30,8 +30,8 @@ function LoadedPage() {
             // root.style.setProperty('--p0', 'transparent');
             // root.style.setProperty('--p1', 'black');
             
-            root.style.setProperty('--p0', 'rgb(0,0,0,' + paraFadeTop + ')');
-
+            //root.style.setProperty('--p0', 'rgb(0,0,0,' + paraFadeTop + ')');
+            CheckRatio();
             fadeState = 0;
         }
         if (scrollTop <= 0 && fadeState != 2)
@@ -159,14 +159,20 @@ function ToggleHoverState(hov){
     vidc.style.animationDuration = "0.25s";
 }
 
-function RunApp() {
-
-    document.getElementById("path2820").setAttribute('d',soundOnDraw);
+function CheckRatio() {
     let mainInfo = document.getElementById("main-id").getBoundingClientRect();
     document.getElementById("main-id").innerHTML = 
         "Width: " + parseInt(mainInfo.width) + 
         "<br>Height: " + mainInfo.height + 
         "<br>Fits Main: " + (mainInfo.height >= (mainInfo.width * 1.25066667)) + " ___ " + (parseInt(mainInfo.width * 1.25066667));
+}
+
+function RunApp() {
+
+    document.getElementById("path2820").setAttribute('d',soundOnDraw);
+    
+    let preMainInfo = document.getElementById("main-id").getBoundingClientRect();
+    root.style.setProperty('--main-height', preMainInfo.height + 'px');
 
     var then = 0;
 
