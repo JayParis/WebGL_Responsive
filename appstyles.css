@@ -3,17 +3,21 @@
 
     --p0: black;
     --p1: transparent;
-    --settings-icon: #ffffff33;
-    --settings-icon-hover: #ffffff80;
-    
-    --exit-icon: #ff737337;
-    --exit-icon-hover: #ff737380;
 
     --replay-icon: #ffffff33;
     --replay-icon-hover: #ffffff80;
 
     --pause-icon: #ffffff33;
     --pause-icon-hover: #ffffff80;
+
+    --sound-icon: #ffffffe4;
+    --sound-icon-hover: #ffffffe4;
+
+    --settings-icon: #ffffff33;
+    --settings-icon-hover: #ffffff80;
+    
+    --exit-icon: #ff737337;
+    --exit-icon-hover: #ff737380;
 
     --prev-arrow: #ffffff33;
     --prev-arrow-hover: #ffffff80;
@@ -284,8 +288,12 @@ input[type=range]:focus::-moz-range-track {
 
 
 #path2820{
-    fill: rgba(255, 255, 255, 0.91) !important;
+    /* fill: rgba(255, 255, 255, 0.91) !important; */
+    fill: rgba(255, 255, 255, 0.91);
 }
+@keyframes sound_hover { 0% { fill: var(--sound-icon); } 100% { fill: var(--sound-icon-hover); } }
+@keyframes sound_unhover { 0% { fill: var(--sound-icon-hover); } 100% { fill: var(--sound-icon); } }
+
 #path3969 { /*Settings Icon*/
     fill: var(--settings-icon);
     pointer-events: none;

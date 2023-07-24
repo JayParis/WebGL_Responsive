@@ -102,9 +102,9 @@
                         </div>
                         <div class="volume-cont" id="vc-id">
                             <div class="volume-slider-cont">
-                                <input class="volume-slider" id="v-slider-id" type="range" min="0" max="100" value="50" step="1"/>
+                                <input class="volume-slider" id="v-slider-id" type="range" min="0" max="100" value="50" step="1" oninput="OnSliderChange(this.value)"/>
                             </div>
-                            <div class="volume-icon">
+                            <div class="volume-icon" id="hover-volume-id">
                                 <div class="sound-svg-cont">
                                     <svg
                                     viewBox="0 0 160 159.99999"
