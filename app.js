@@ -75,6 +75,7 @@ function LoadedPage() {
     SetUpIconEvent('path4866', 'na-id', '--next-arrow', 'next');
     //SetUpIconEvent('path1695', 'hover-replay-id', '--replay-icon', 'replay');
 
+
     document.getElementById('hover-volume-id').addEventListener('mousedown', () => {
         console.log("Sound Pressed");
         if(mute){
@@ -90,6 +91,11 @@ function LoadedPage() {
         console.log("Exit Pressed");
     });
 
+    
+    // ToggleHoverState(false);
+    // ks.globalPause();
+    // let vc = document.getElementById('v-slider-id');
+    // vc.style.display = "none";
     RunApp();
 }
 
