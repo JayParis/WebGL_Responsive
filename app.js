@@ -20,10 +20,11 @@ var soundOffDraw = "m 89.451372,128.72099 c -1.161236,-0.25285 -2.485667,-0.8129
 
 function LoadedPage() {
     window.addEventListener("resize", () => {
-        let preMainInfo = document.getElementById("main-id").getBoundingClientRect();
-        root.style.setProperty('--main-height', preMainInfo.height + 'px');
+        SendCSSHeight();
         CheckParaScroll();
     });
+    SendCSSHeight();
+
 
     document.getElementById('pb-id').addEventListener('scroll', function(){
         let para = document.getElementById('pb-id');
@@ -289,6 +290,11 @@ function CheckRatio() {
         "Width: " + parseInt(mainInfo.width) + 
         "<br>Height: " + mainInfo.height + 
         "<br>Fits Main: " + (mainInfo.height >= (mainInfo.width * 1.25066667)) + " ___ " + (parseInt(mainInfo.width * 1.25066667));
+}
+
+function SendCSSHeight(){
+    let preMainInfo = document.getElementById("main-id").getBoundingClientRect();
+    root.style.setProperty('--main-height', preMainInfo.height + 'px');
 }
 
 function lerp (start, end, amt) {
