@@ -11,6 +11,7 @@ var hoverOut = false;
 
 var paraFadeTop = 0;
 var paraFadeBottom = 0;
+var shortPara = false;
 
 var mute = false;
 var lastVolume = "50";
@@ -21,6 +22,7 @@ function LoadedPage() {
     window.addEventListener("resize", () => {
         let preMainInfo = document.getElementById("main-id").getBoundingClientRect();
         root.style.setProperty('--main-height', preMainInfo.height + 'px');
+        CheckParaScroll();
     });
 
     document.getElementById('pb-id').addEventListener('scroll', function(){
@@ -30,19 +32,22 @@ function LoadedPage() {
         var offsetHeight = para.offsetHeight;
         // var clientHeight = document.getElementById('box').clientHeight;
 
-        var contentHeight = scrollHeight - offsetHeight; // added
-        if (contentHeight <= scrollTop && fadeState != 0) {
-            //console.log("Scroll end");
-            CheckRatio();
-            fadeState = 0;
-        }
-        if (scrollTop <= 0 && fadeState != 2) {
-            //console.log("Scroll top");
-            fadeState = 2;
-        }
-        if( scrollTop >= 10 && contentHeight >= (scrollTop + 10)  && fadeState != 1){
-            //console.log("Scroll middle");
-            fadeState = 1;
+        if(!shortPara){
+            var contentHeight = scrollHeight - offsetHeight; // added
+            if (contentHeight <= scrollTop && fadeState != 0) {
+                //console.log("Scroll end");
+                CheckRatio();
+                fadeState = 0;
+            }
+            if (scrollTop <= 0 && fadeState != 2) {
+                //console.log("Scroll top");
+                CheckRatio();
+                fadeState = 2;
+            }
+            if( scrollTop >= 10 && contentHeight >= (scrollTop + 10)  && fadeState != 1){
+                //console.log("Scroll middle");
+                fadeState = 1;
+            }
         }
     }, false);
 
@@ -126,6 +131,7 @@ function ContButtonClicked(){
     outline.style.animationFillMode = "both";
     outline.style.animationDuration = "0.25s";
     */
+
     
 }
 
@@ -251,14 +257,33 @@ function LoadParaFile(){
                     finalLines.push("<p>" + separateLines[i] + "</p>");
                 }
             }
-            let paraInsert = document.getElementById('para-insert').innerHTML = finalLines.join('');
+            document.getElementById('para-insert').innerHTML = finalLines.join('');
             console.log("Total number of separate lines is: " + separateLines.length);
+            setTimeout(() => {
+                CheckParaScroll();
+            }, 500);
         })
 }
 
 // Misc Methods
 
+function CheckParaScroll(){
+    let para = document.getElementById('pb-id');
+    shortPara = para.scrollHeight <= para.offsetHeight;
+    if(shortPara){
+        paraFadeTop = 1;
+        paraFadeBottom = 1;
+    }else{
+        paraFadeTop = 1;
+        paraFadeBottom = 0;
+    }
+    root.style.setProperty('--p0', 'rgb(0,0,0,' + paraFadeTop + ')');
+    root.style.setProperty('--p1', 'rgb(0,0,0,' + paraFadeBottom + ')');
+    console.log("Short Para: " + shortPara);
+}
+
 function CheckRatio() {
+
     let mainInfo = document.getElementById("main-id").getBoundingClientRect();
     document.getElementById("main-id").innerHTML = 
         "Width: " + parseInt(mainInfo.width) + 
