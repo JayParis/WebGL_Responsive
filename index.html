@@ -13,10 +13,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text&display=swap" rel="stylesheet">
     <script src="app.js"></script>
+    <script src="gl-matrix.js"></script>
+    <script src="renderer.js"></script>
 </head>
-<body onload="LoadedPage()">
+<body onload="LoadedPage(); LoadRenderer();">
     <div class="bg-blur">
-        <button id="demo-btn" onclick="ContButtonClicked()" style="position: fixed;">Press</button>
+        <button id="demo-btn" onclick="ContButtonClicked(); RendererDebugButton();" style="position: fixed;">Press</button>
         <div class="group-container">
             <div class="settings-column">
                 <div class="settings-block">
@@ -161,7 +163,7 @@
                 </div>
             </div>
             <div class="main-column" id="main-id">
-                Main Text
+                <canvas id="application" width="750" height="938"></canvas>
             </div>
             <div class="para-column">
                 <div class="para-block" id="pb-id">

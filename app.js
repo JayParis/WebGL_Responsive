@@ -25,7 +25,6 @@ function LoadedPage() {
     });
     SendCSSHeight();
 
-
     document.getElementById('pb-id').addEventListener('scroll', function(){
         let para = document.getElementById('pb-id');
         var scrollTop = para.scrollTop;
@@ -37,12 +36,10 @@ function LoadedPage() {
             var contentHeight = scrollHeight - offsetHeight; // added
             if (contentHeight <= scrollTop && fadeState != 0) {
                 //console.log("Scroll end");
-                CheckRatio();
                 fadeState = 0;
             }
             if (scrollTop <= 0 && fadeState != 2) {
                 //console.log("Scroll top");
-                CheckRatio();
                 fadeState = 2;
             }
             if( scrollTop >= 10 && contentHeight >= (scrollTop + 10)  && fadeState != 1){
@@ -281,15 +278,6 @@ function CheckParaScroll(){
     root.style.setProperty('--p0', 'rgb(0,0,0,' + paraFadeTop + ')');
     root.style.setProperty('--p1', 'rgb(0,0,0,' + paraFadeBottom + ')');
     console.log("Short Para: " + shortPara);
-}
-
-function CheckRatio() {
-
-    let mainInfo = document.getElementById("main-id").getBoundingClientRect();
-    document.getElementById("main-id").innerHTML = 
-        "Width: " + parseInt(mainInfo.width) + 
-        "<br>Height: " + mainInfo.height + 
-        "<br>Fits Main: " + (mainInfo.height >= (mainInfo.width * 1.25066667)) + " ___ " + (parseInt(mainInfo.width * 1.25066667));
 }
 
 function SendCSSHeight(){
