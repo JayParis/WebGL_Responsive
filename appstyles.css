@@ -43,10 +43,10 @@ body {
 
 .bg-blur {
     /*background-color:  red;*/
-    background-image: url('Images/BG_Blur_1.webp');
+    background-image: url('Images/BG_Blur_2.webp');
     /*background-repeat: no-repeat;*/
     background-size: cover;
-    background-color: rgba(0, 0, 0, 0.65);
+    background-color: rgba(0, 0, 0, 0.7);
     background-blend-mode: multiply;
 
     position:absolute;

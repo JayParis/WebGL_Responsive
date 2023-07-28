@@ -10,13 +10,16 @@ const _supabaseUrl = 'https://cfzcrwfmlxquedvdajiw.supabase.co';
 
 
 function LoadRenderer(){
-    loadImageURLs();
+    loadImageURLs(true);
 }
 
-function loadImageURLs(){
+function loadImageURLs(HQ){
+    let path = HQ ? '/storage/v1/object/public/main-pages/Page_1_Main_' 
+    : '/storage/v1/object/public/main-pages/750/Page_1_Main_';
+    
     for (let i = 1; i <= 160; i += remoteImagesLoadStep) { //160
         let end = i.toString().padStart(4,'0');
-        fetch(_supabaseUrl + '/storage/v1/object/public/main-pages/750/Page_1_Main_' + end + '.webp')
+        fetch(_supabaseUrl + path + end + '.webp')
             .then(res => res.blob())
             .then(blob => {
                 const file = new File([blob], i.toString(), {type: blob.type});
@@ -111,7 +114,7 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderTex
     const mViewLoc = gl.getUniformLocation(prg_1, 'mView');             const main_mViewLoc = gl.getUniformLocation(prg_2, 'mView');
     const mProjLoc = gl.getUniformLocation(prg_1, 'mProj');             const main_mProjLoc = gl.getUniformLocation(prg_2, 'mProj');
     const sampler1Loc = gl.getUniformLocation(prg_1, 'sampler_1');      const main_sampler1Loc = gl.getUniformLocation(prg_2, 'sampler_1');
-    //const topAndBottomLoc = gl.getUniformLocation(prg_1, 'topAndBottom');
+    const topAndBottomLoc = gl.getUniformLocation(prg_2, 'topAndBottom'); const main_sampler2Loc = gl.getUniformLocation(prg_2, 'sampler_2');
     //const sampler2Loc = gl.getUniformLocation(prg_1, 'sampler_2');
 
     var planeVertices = 
@@ -377,10 +380,13 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderTex
                 0.0, enableVideo ? uTop : 1 - uTop, canvas.width, displayHeight,
             ]
 
-            gl.useProgram(prg_1);
+            gl.bindBuffer(gl.ARRAY_BUFFER, texCoordsBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(newPlaneTexCoords), gl.STATIC_DRAW);
+            gl.useProgram(prg_2);
+            gl.uniform2fv(topAndBottomLoc, [correctUV[2],correctUV[3]]);
+            
+            
             // pro2
-            //gl.uniform2fv(topAndBottomLoc, [correctUV[2],correctUV[3]]);
             needsInvert = false;
         }
 
@@ -398,7 +404,8 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderTex
         let resized = resizeCanvasToDisplaySize(gl.canvas);
         let redraw = previous_vID != vID || resized;
 
-        if(redraw && false){
+        if(redraw){
+            /*
             gl.clearColor(0.75, 0.85, 0.8, 1.0);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             
@@ -414,6 +421,46 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderTex
             );
 
             gl.drawElements(gl.TRIANGLES, planeIndices.length, gl.UNSIGNED_SHORT, 0);
+            */
+
+            gl.viewport(0, 0, fbTextureWidth, fbTextureHeight);
+            gl.clearColor(0.05, 0.85, 0.8, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            
+            gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+
+            gl.useProgram(prg_1);
+            texUnit = 6;
+            gl.activeTexture(gl.TEXTURE0 + texUnit);
+            gl.bindTexture(gl.TEXTURE_2D, mainTexture);
+            gl.texImage2D(
+                gl.TEXTURE_2D, 
+                0,                  // mip level
+                gl.RGBA,            // internal format
+                gl.RGBA,            // format
+                gl.UNSIGNED_BYTE,   // type
+                imageList[vID][0]     // data
+            );
+            gl.uniform1i(sampler1Loc, texUnit);
+
+            gl.drawElements(gl.TRIANGLES, planeIndices.length, gl.UNSIGNED_SHORT, 0);
+
+            gl.useProgram(prg_2);
+            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            
+            texUnit = 3;
+            gl.activeTexture(gl.TEXTURE0 + texUnit);
+            gl.bindTexture(gl.TEXTURE_2D, fbTexture);
+            gl.uniform1i(main_sampler1Loc, texUnit);
+            texUnit = 4;
+            gl.activeTexture(gl.TEXTURE0 + texUnit);
+            gl.bindTexture(gl.TEXTURE_2D, mainTexture);
+            gl.uniform1i(main_sampler2Loc, texUnit);
+
+            gl.drawElements(gl.TRIANGLES, planeIndices.length, gl.UNSIGNED_SHORT, 0);
+
         }
 
         previous_vID = vID;
