@@ -50,14 +50,14 @@ async function loadShadersAndRunDemo(){
         .then(result => result.text());
     const fragmentShaderText = await fetch('./Shaders/main_fragment.glsl')
         .then(result => result.text());
-    const blurShaderText = await fetch('./Shaders/blur_fragment.glsl')
+    const downsampleShaderText = await fetch('./Shaders/downsample_fragment.glsl')
         .then(result => result.text());
     
     hasInit = true;
-    RunDemo(vertexShaderText,fragmentShaderText,blurShaderText);
+    RunDemo(vertexShaderText,fragmentShaderText,downsampleShaderText);
 }
 
-var RunDemo = function(vertexShaderText, fragmentShaderText, blurShaderText){
+var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderText){
     var canvas = document.getElementById('application');
     var gl = canvas.getContext('webgl2');
     if(!gl) { console.log("WebGL not supported, falling back on experimental"); gl = canvas.getContext('experimental-webgl'); }
@@ -74,29 +74,44 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, blurShaderText){
         throw new Error(gl.getShaderInfoLog(vertexShader))
     };
         
-    const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-    gl.shaderSource(fragmentShader, fragmentShaderText);
-    gl.compileShader(fragmentShader);
-    if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
-        throw new Error(gl.getShaderInfoLog(fragmentShader))
+    const downsampleShader = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(downsampleShader, downsampleShaderText); //fragmentShaderText
+    gl.compileShader(downsampleShader);
+    if (!gl.getShaderParameter(downsampleShader, gl.COMPILE_STATUS)) {
+        throw new Error(gl.getShaderInfoLog(downsampleShader))
+    };
+
+    const mainShader = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(mainShader, fragmentShaderText);
+    gl.compileShader(mainShader);
+    if (!gl.getShaderParameter(mainShader, gl.COMPILE_STATUS)) {
+        throw new Error(gl.getShaderInfoLog(mainShader))
     };
     
     const prg_1 = gl.createProgram();
     gl.attachShader(prg_1, vertexShader);
-    gl.attachShader(prg_1, fragmentShader);
+    gl.attachShader(prg_1, downsampleShader);
     gl.linkProgram(prg_1);
     if (!gl.getProgramParameter(prg_1, gl.LINK_STATUS)) {
         throw new Error(gl.getProgramInfoLog(prg_1))
     };
-    
-    const positionLoc = gl.getAttribLocation(prg_1, 'vertPosition');
-    const texcoordLoc = gl.getAttribLocation(prg_1, 'vertTexCoord');
 
-    const mWorldLoc = gl.getUniformLocation(prg_1, 'mWorld');
-    const mViewLoc = gl.getUniformLocation(prg_1, 'mView');
-    const mProjLoc = gl.getUniformLocation(prg_1, 'mProj');
-    const sampler1Loc = gl.getUniformLocation(prg_1, 'sampler_1');
-    const topAndBottomLoc = gl.getUniformLocation(prg_1, 'topAndBottom');
+    const prg_2 = gl.createProgram();
+    gl.attachShader(prg_2, vertexShader);
+    gl.attachShader(prg_2, mainShader);
+    gl.linkProgram(prg_2);
+    if (!gl.getProgramParameter(prg_2, gl.LINK_STATUS)) {
+        throw new Error(gl.getProgramInfoLog(prg_2))
+    };
+    
+    const positionLoc = gl.getAttribLocation(prg_1, 'vertPosition');    const main_positionLoc = gl.getAttribLocation(prg_2, 'vertPosition');
+    const texcoordLoc = gl.getAttribLocation(prg_1, 'vertTexCoord');    const main_texcoordLoc = gl.getAttribLocation(prg_2, 'vertTexCoord');
+
+    const mWorldLoc = gl.getUniformLocation(prg_1, 'mWorld');           const main_mWorldLoc = gl.getUniformLocation(prg_2, 'mWorld');
+    const mViewLoc = gl.getUniformLocation(prg_1, 'mView');             const main_mViewLoc = gl.getUniformLocation(prg_2, 'mView');
+    const mProjLoc = gl.getUniformLocation(prg_1, 'mProj');             const main_mProjLoc = gl.getUniformLocation(prg_2, 'mProj');
+    const sampler1Loc = gl.getUniformLocation(prg_1, 'sampler_1');      const main_sampler1Loc = gl.getUniformLocation(prg_2, 'sampler_1');
+    //const topAndBottomLoc = gl.getUniformLocation(prg_1, 'topAndBottom');
     //const sampler2Loc = gl.getUniformLocation(prg_1, 'sampler_2');
 
     var planeVertices = 
@@ -152,8 +167,35 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, blurShaderText){
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
+
+    // ------------ Frame Buffer Setup ->
+
+    
+    const fbTextureWidth = 750;
+    const fbTextureHeight = 938;
+    const fbTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, fbTexture);
+    gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,                // mip level
+        gl.RGBA,          // internal format
+        fbTextureWidth,   // width
+        fbTextureHeight,  // height
+        0,                // border
+        gl.RGBA,          // format
+        gl.UNSIGNED_BYTE, // type
+        null,             // data
+    )
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+
+    const fb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fbTexture, 0);
+
+
     // ------------ Rendering ->
 
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -208,7 +250,56 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, blurShaderText){
     
     gl.drawElements(gl.TRIANGLES, planeIndices.length, gl.UNSIGNED_SHORT, 0);
 
+
+
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.enableVertexAttribArray(main_positionLoc);
+    gl.vertexAttribPointer(
+        positionLoc,  // location
+        3,            // size (components per iteration)
+        gl.FLOAT,     // type of to get from buffer
+        false,        // normalize
+        0,            // stride (bytes to advance each iteration)
+        0,            // offset (bytes from start of buffer)
+    );
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, texCoordsBuffer);
+    gl.enableVertexAttribArray(main_texcoordLoc);
+    gl.vertexAttribPointer(
+        main_texcoordLoc,  // location
+        4,            // size (components per iteration)
+        gl.FLOAT,     // type of to get from buffer
+        false,        // normalize
+        0,            // stride (bytes to advance each iteration)
+        0,            // offset (bytes from start of buffer)
+    );
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
+
+    gl.useProgram(prg_2);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    texUnit = 3;
+    gl.activeTexture(gl.TEXTURE0 + texUnit);
+    gl.bindTexture(gl.TEXTURE_2D, fbTexture);
+
+    gl.uniform1i(main_sampler1Loc, texUnit);
+    gl.uniformMatrix4fv(main_mWorldLoc, gl.FALSE, worldMatrix);
+    gl.uniformMatrix4fv(main_mViewLoc, gl.FALSE, viewMatrix);
+    gl.uniformMatrix4fv(main_mProjLoc, gl.FALSE, projMatrix);
+
+    gl.clearColor(0.05, 0.85, 0.8, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    gl.drawElements(gl.TRIANGLES, planeIndices.length, gl.UNSIGNED_SHORT, 0);
+
+    
+    // discard and detatch?
+
     // ------------ Resize ->
+    
 
     const canvasToDisplaySizeMap = new Map([[canvas, [750, 938]]]);
 
@@ -288,7 +379,8 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, blurShaderText){
 
             gl.useProgram(prg_1);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(newPlaneTexCoords), gl.STATIC_DRAW);
-            gl.uniform2fv(topAndBottomLoc, [correctUV[2],correctUV[3]]);
+            // pro2
+            //gl.uniform2fv(topAndBottomLoc, [correctUV[2],correctUV[3]]);
             needsInvert = false;
         }
 
@@ -296,19 +388,17 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, blurShaderText){
     }
 
     // ------------ Render Loop ->
-    
     var then = 0;
 
     function render(now) {
         now *= 0.001;
         var deltaTime = now - then;
         then = now;
+        
+        let resized = resizeCanvasToDisplaySize(gl.canvas);
+        let redraw = previous_vID != vID || resized;
 
-        let isNewFrame = previous_vID != vID;
-
-        resizeCanvasToDisplaySize(gl.canvas);
-
-        if(isNewFrame){
+        if(redraw && false){
             gl.clearColor(0.75, 0.85, 0.8, 1.0);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             
@@ -331,12 +421,12 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, blurShaderText){
         requestAnimationFrame(render);
     }
     requestAnimationFrame(render);
-
+    
     console.log("Running Demo");
 }
 
 function getParaOffset(containerWidth, containerHeight, safeArea){
-    let card_prop = (containerWidth * 1.25066) / containerHeight;;
+    let card_prop = (containerWidth * 1.25066) / containerHeight;
     let sa_prop = safeArea / containerHeight;
 
     return card_prop + sa_prop;
