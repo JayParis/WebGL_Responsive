@@ -71,7 +71,7 @@ void main()
    vec4 composite = mix(img_2, Color, blur);
    vec4 darkened = mix(fadeTint, composite, fades);
 
-   gl_FragColor = darkened;
+   gl_FragColor = darkened; //darkened
 
    //float stepf = smoothstep(0.995,0.995005,fragTexCoord.y);
    //gl_FragColor = vec4(stepf,stepf,stepf,1.0);

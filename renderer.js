@@ -44,24 +44,28 @@ function SortImages(){
         return 0;
     });
     console.log(imageList[0]);
-    loadShadersAndRunDemo();
+    loadShadersAndInitRenderer();
 }
 
-async function loadShadersAndRunDemo(){
+async function loadShadersAndInitRenderer(){
 
-    const vertexShaderText = await fetch('./Shaders/main_vertex.glsl')
+    const mainVertexShaderText = await fetch('./Shaders/main_vertex.glsl')
         .then(result => result.text());
+    const equiVertexShaderText = await fetch('./Shaders/equi_vertex.glsl')
+        .then(result => result.text());
+
     const fragmentShaderText = await fetch('./Shaders/main_fragment.glsl')
         .then(result => result.text());
     const downsampleShaderText = await fetch('./Shaders/downsample_fragment.glsl')
+        .then(result => result.text());
+    const equiShaderText = await fetch('./Shaders/equi_fragment.glsl')
         .then(result => result.text());
 
     const EquiObjText = await fetch('./EquiSphere.obj')
         .then(result => result.text());
     
-
     hasInit = true;
-    RunDemo(vertexShaderText,fragmentShaderText,downsampleShaderText, EquiObjText);
+    InitRenderer(mainVertexShaderText,equiVertexShaderText,fragmentShaderText,downsampleShaderText, equiShaderText, EquiObjText);
 }
 
 function parseOBJ(text) {
@@ -117,7 +121,7 @@ function parseOBJ(text) {
     };
 }
 
-var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderText, equiObjText){
+var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragmentShaderText, downsampleShaderText, equiShaderText, equiObjText){
     var canvas = document.getElementById('application');
     var gl = canvas.getContext('webgl2');
     if(!gl) { console.log("WebGL not supported, falling back on experimental"); gl = canvas.getContext('experimental-webgl'); }
@@ -127,11 +131,18 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderTex
     canvas.style.width = "100%";
     canvas.style.height = "100%";
     
-    const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-    gl.shaderSource(vertexShader, vertexShaderText);
-    gl.compileShader(vertexShader);
-    if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
-        throw new Error(gl.getShaderInfoLog(vertexShader))
+    const mainVertexShader = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(mainVertexShader, mainVertexShaderText);
+    gl.compileShader(mainVertexShader);
+    if (!gl.getShaderParameter(mainVertexShader, gl.COMPILE_STATUS)) {
+        throw new Error(gl.getShaderInfoLog(mainVertexShader))
+    };
+
+    const equiVertexShader = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(equiVertexShader, equiVertexShaderText);
+    gl.compileShader(equiVertexShader);
+    if (!gl.getShaderParameter(equiVertexShader, gl.COMPILE_STATUS)) {
+        throw new Error(gl.getShaderInfoLog(equiVertexShader))
     };
         
     const downsampleShader = gl.createShader(gl.FRAGMENT_SHADER);
@@ -141,6 +152,13 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderTex
         throw new Error(gl.getShaderInfoLog(downsampleShader))
     };
 
+    const equiShader = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(equiShader, equiShaderText); //fragmentShaderText
+    gl.compileShader(equiShader);
+    if (!gl.getShaderParameter(equiShader, gl.COMPILE_STATUS)) {
+        throw new Error(gl.getShaderInfoLog(equiShader))
+    };
+
     const mainShader = gl.createShader(gl.FRAGMENT_SHADER);
     gl.shaderSource(mainShader, fragmentShaderText);
     gl.compileShader(mainShader);
@@ -148,31 +166,49 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderTex
         throw new Error(gl.getShaderInfoLog(mainShader))
     };
     
-    const prg_1 = gl.createProgram();
-    gl.attachShader(prg_1, vertexShader);
-    gl.attachShader(prg_1, downsampleShader);
-    gl.linkProgram(prg_1);
-    if (!gl.getProgramParameter(prg_1, gl.LINK_STATUS)) {
-        throw new Error(gl.getProgramInfoLog(prg_1))
+
+    const prg_downsample = gl.createProgram();
+    gl.attachShader(prg_downsample, mainVertexShader);
+    gl.attachShader(prg_downsample, downsampleShader);
+    gl.linkProgram(prg_downsample);
+    if (!gl.getProgramParameter(prg_downsample, gl.LINK_STATUS)) {
+        throw new Error(gl.getProgramInfoLog(prg_downsample))
     };
 
-    const prg_2 = gl.createProgram();
-    gl.attachShader(prg_2, vertexShader);
-    gl.attachShader(prg_2, mainShader);
-    gl.linkProgram(prg_2);
-    if (!gl.getProgramParameter(prg_2, gl.LINK_STATUS)) {
-        throw new Error(gl.getProgramInfoLog(prg_2))
+    const prg_equi = gl.createProgram();
+    gl.attachShader(prg_equi, equiVertexShader);
+    gl.attachShader(prg_equi, equiShader);
+    gl.linkProgram(prg_equi);
+    if (!gl.getProgramParameter(prg_equi, gl.LINK_STATUS)) {
+        throw new Error(gl.getProgramInfoLog(prg_equi))
+    };
+
+    const prg_main = gl.createProgram();
+    gl.attachShader(prg_main, mainVertexShader);
+    gl.attachShader(prg_main, mainShader);
+    gl.linkProgram(prg_main);
+    if (!gl.getProgramParameter(prg_main, gl.LINK_STATUS)) {
+        throw new Error(gl.getProgramInfoLog(prg_main))
     };
     
-    const positionLoc = gl.getAttribLocation(prg_1, 'vertPosition');    const main_positionLoc = gl.getAttribLocation(prg_2, 'vertPosition');
-    const texcoordLoc = gl.getAttribLocation(prg_1, 'vertTexCoord');    const main_texcoordLoc = gl.getAttribLocation(prg_2, 'vertTexCoord');
+    const positionLoc = gl.getAttribLocation(prg_downsample, 'vertPosition');    const main_positionLoc = gl.getAttribLocation(prg_main, 'vertPosition');
+    const texcoordLoc = gl.getAttribLocation(prg_downsample, 'vertTexCoord');    const main_texcoordLoc = gl.getAttribLocation(prg_main, 'vertTexCoord');
 
-    const mWorldLoc = gl.getUniformLocation(prg_1, 'mWorld');           const main_mWorldLoc = gl.getUniformLocation(prg_2, 'mWorld');
-    const mViewLoc = gl.getUniformLocation(prg_1, 'mView');             const main_mViewLoc = gl.getUniformLocation(prg_2, 'mView');
-    const mProjLoc = gl.getUniformLocation(prg_1, 'mProj');             const main_mProjLoc = gl.getUniformLocation(prg_2, 'mProj');
-    const sampler1Loc = gl.getUniformLocation(prg_1, 'sampler_1');      const main_sampler1Loc = gl.getUniformLocation(prg_2, 'sampler_1');
-    const topAndBottomLoc = gl.getUniformLocation(prg_2, 'topAndBottom'); const main_sampler2Loc = gl.getUniformLocation(prg_2, 'sampler_2');
-    //const sampler2Loc = gl.getUniformLocation(prg_1, 'sampler_2');
+    const mWorldLoc = gl.getUniformLocation(prg_downsample, 'mWorld');           const main_mWorldLoc = gl.getUniformLocation(prg_main, 'mWorld');
+    const mViewLoc = gl.getUniformLocation(prg_downsample, 'mView');             const main_mViewLoc = gl.getUniformLocation(prg_main, 'mView');
+    const mProjLoc = gl.getUniformLocation(prg_downsample, 'mProj');             const main_mProjLoc = gl.getUniformLocation(prg_main, 'mProj');
+    const sampler1Loc = gl.getUniformLocation(prg_downsample, 'sampler_1');      const main_sampler1Loc = gl.getUniformLocation(prg_main, 'sampler_1');
+    const topAndBottomLoc = gl.getUniformLocation(prg_main, 'topAndBottom');        const main_sampler2Loc = gl.getUniformLocation(prg_main, 'sampler_2');
+    //const sampler2Loc = gl.getUniformLocation(prg_downsample, 'sampler_2');
+
+    const equi_positionLoc = gl.getAttribLocation(prg_equi, 'vertPosition');
+    const equi_texcoordLoc = gl.getAttribLocation(prg_equi, 'vertTexCoord');
+    const equi_mWorldLoc = gl.getUniformLocation(prg_equi, 'mWorld');
+    const equi_mViewLoc = gl.getUniformLocation(prg_equi, 'mView');
+    const equi_mProjLoc = gl.getUniformLocation(prg_equi, 'mProj');
+    const equi_sampler1Loc = gl.getUniformLocation(prg_equi, 'sampler_1');
+
+
 
     const meshData = parseOBJ(equiObjText);
     console.log(meshData);
@@ -194,7 +230,7 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderTex
         1.0, 1.0, canvas.width, canvas.height,
         0.0, 1.0, canvas.width, canvas.height,
         0.0, 0.0, canvas.width, canvas.height
-    ]
+    ];
 
     var planeIndices =
 	[
@@ -292,7 +328,7 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderTex
     
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
 
-    gl.useProgram(prg_1);
+    gl.useProgram(prg_downsample);
 
     let texUnit = 6;
     gl.activeTexture(gl.TEXTURE0 + texUnit);
@@ -342,7 +378,7 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderTex
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
 
-    gl.useProgram(prg_2);
+    gl.useProgram(prg_main);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
@@ -444,9 +480,8 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderTex
 
             gl.bindBuffer(gl.ARRAY_BUFFER, texCoordsBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(newPlaneTexCoords), gl.STATIC_DRAW);
-            gl.useProgram(prg_2);
+            //gl.useProgram(prg_main);
             gl.uniform2fv(topAndBottomLoc, [correctUV[2],correctUV[3]]);
-            
             
             // pro2
             needsInvert = false;
@@ -491,7 +526,7 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderTex
             
             gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
 
-            gl.useProgram(prg_1);
+            gl.useProgram(prg_downsample);
             texUnit = 6;
             gl.activeTexture(gl.TEXTURE0 + texUnit);
             gl.bindTexture(gl.TEXTURE_2D, mainTexture);
@@ -507,7 +542,7 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderTex
 
             gl.drawElements(gl.TRIANGLES, planeIndices.length, gl.UNSIGNED_SHORT, 0);
 
-            gl.useProgram(prg_2);
+            gl.useProgram(prg_main);
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
