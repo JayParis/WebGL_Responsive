@@ -56,26 +56,16 @@ async function loadShadersAndRunDemo(){
     const downsampleShaderText = await fetch('./Shaders/downsample_fragment.glsl')
         .then(result => result.text());
 
-    const planeObjText = await fetch('./OBJ_BlenderPlane.obj')
+    const EquiObjText = await fetch('./EquiSphere.obj')
         .then(result => result.text());
     
 
     hasInit = true;
-    RunDemo(vertexShaderText,fragmentShaderText,downsampleShaderText, planeObjText);
+    RunDemo(vertexShaderText,fragmentShaderText,downsampleShaderText, EquiObjText);
 }
 
 function parseOBJ(text) {
-    // because indices are base 1 let's just fill in the 0th data
-    const objPositions = [[0, 0, 0]];
-    const objTexcoords = [[0, 0]];
-    const objNormals = [[0, 0, 0]];
-  
-    // same order as `f` indices
-    const objVertexData = [
-      objPositions,
-      objTexcoords,
-      objNormals,
-    ];
+    const OBJIndices = [];
   
     // same order as `f` indices
     let webglVertexData = [
@@ -84,44 +74,17 @@ function parseOBJ(text) {
       [],   // normals
     ];
   
-    function newGeometry() {
-      // If there is an existing geometry and it's
-      // not empty then start a new one.
-      if (geometry && geometry.data.position.length) {
-        geometry = undefined;
-      }
-      setGeometry();
-    }
-  
-    function addVertex(vert) {
-      const ptn = vert.split('/');
-      ptn.forEach((objIndexStr, i) => {
-        if (!objIndexStr) {
-          return;
-        }
-        const objIndex = parseInt(objIndexStr);
-        const index = objIndex + (objIndex >= 0 ? 0 : objVertexData[i].length);
-        webglVertexData[i].push(...objVertexData[i][index]);
-      });
-    }
-  
     const keywords = {
       v(parts) {
-        objPositions.push(parts.map(parseFloat));
-      },
-      vn(parts) {
-        objNormals.push(parts.map(parseFloat));
+        webglVertexData[0].push(...parts.map(parseFloat));
       },
       vt(parts) {
-        // should check for missing v and extra w?
-        objTexcoords.push(parts.map(parseFloat));
+		webglVertexData[1].push(...parts.map(parseFloat));
       },
       f(parts) {
-        const numTriangles = parts.length - 2;
-        for (let tri = 0; tri < numTriangles; ++tri) {
-          addVertex(parts[0]);
-          addVertex(parts[tri + 1]);
-          addVertex(parts[tri + 2]);
+        for (let i = 0; i < parts.length; i++) {
+            let firstVal = parts[i].split('/')[0];
+            OBJIndices.push(parseInt(firstVal) - 1);
         }
       },
     };
@@ -150,10 +113,11 @@ function parseOBJ(text) {
       position: webglVertexData[0],
       texcoord: webglVertexData[1],
       normal: webglVertexData[2],
+      indices: OBJIndices,
     };
 }
 
-var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderText, planeObjText){
+var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderText, equiObjText){
     var canvas = document.getElementById('application');
     var gl = canvas.getContext('webgl2');
     if(!gl) { console.log("WebGL not supported, falling back on experimental"); gl = canvas.getContext('experimental-webgl'); }
@@ -210,7 +174,7 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderTex
     const topAndBottomLoc = gl.getUniformLocation(prg_2, 'topAndBottom'); const main_sampler2Loc = gl.getUniformLocation(prg_2, 'sampler_2');
     //const sampler2Loc = gl.getUniformLocation(prg_1, 'sampler_2');
 
-    const meshData = parseOBJ(planeObjText);
+    const meshData = parseOBJ(equiObjText);
     console.log(meshData);
 
     var planeVertices = 
@@ -222,7 +186,7 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderTex
 		-1.0, 1.0, 1.0,     
 	];
 
-    //planeVertices = meshData[0];
+    //planeVertices = meshData.position;
 
     var planeTexCoords = 
     [ // U V
@@ -250,7 +214,7 @@ var RunDemo = function(vertexShaderText, fragmentShaderText, downsampleShaderTex
     const indicesBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(planeIndices), gl.STATIC_DRAW);
-
+    
     // Texture setup
 
     const mainTexture = gl.createTexture();

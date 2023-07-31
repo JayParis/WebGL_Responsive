@@ -28,7 +28,9 @@ vec4 tex2DBiLinear( sampler2D textureSampler_i, vec2 texCoord_i )
 
 void main() 
 { 
+   //gl_FragColor = texture2D(sampler_1, fragTexCoord.xy);
    gl_FragColor = tex2DBiLinear(sampler_1, fragTexCoord.xy);
+   
    //float stepf = smoothstep(0.995,0.995005,fragTexCoord.y);
    //gl_FragColor = vec4(stepf,stepf,stepf,1.0);
 }
