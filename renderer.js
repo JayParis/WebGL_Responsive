@@ -8,9 +8,14 @@ var previous_vID = 0;
 
 const _supabaseUrl = 'https://cfzcrwfmlxquedvdajiw.supabase.co';
 
+var equiImage = new Image();
 
 function LoadRenderer(){
-    loadImageURLs(true);
+    equiImage.onload = function() {
+        console.log("Equi Image Loaded");
+        loadImageURLs(true);
+	};
+    equiImage.src = './Images/Page_1_Frame_1_Equi4K_JPG3.jpg';
 }
 
 function loadImageURLs(HQ){
@@ -131,127 +136,100 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
     canvas.style.width = "100%";
     canvas.style.height = "100%";
     
-    const mainVertexShader = gl.createShader(gl.VERTEX_SHADER);
-    gl.shaderSource(mainVertexShader, mainVertexShaderText);
-    gl.compileShader(mainVertexShader);
-    if (!gl.getShaderParameter(mainVertexShader, gl.COMPILE_STATUS)) {
-        throw new Error(gl.getShaderInfoLog(mainVertexShader))
-    };
+    function createShader(gl, type, source) {
+        var shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+        if (success) {
+          return shader;
+        }
+        console.log(gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+    }
 
-    const equiVertexShader = gl.createShader(gl.VERTEX_SHADER);
-    gl.shaderSource(equiVertexShader, equiVertexShaderText);
-    gl.compileShader(equiVertexShader);
-    if (!gl.getShaderParameter(equiVertexShader, gl.COMPILE_STATUS)) {
-        throw new Error(gl.getShaderInfoLog(equiVertexShader))
-    };
-        
-    const downsampleShader = gl.createShader(gl.FRAGMENT_SHADER);
-    gl.shaderSource(downsampleShader, downsampleShaderText); //fragmentShaderText
-    gl.compileShader(downsampleShader);
-    if (!gl.getShaderParameter(downsampleShader, gl.COMPILE_STATUS)) {
-        throw new Error(gl.getShaderInfoLog(downsampleShader))
-    };
+    function createProgram(gl, vertexShader, fragmentShader) {
+        var program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        var success = gl.getProgramParameter(program, gl.LINK_STATUS);
+        if (success) {
+          return program;
+        }
+        console.log(gl.getProgramInfoLog(program));
+        gl.deleteProgram(program);
+    }
 
-    const equiShader = gl.createShader(gl.FRAGMENT_SHADER);
-    gl.shaderSource(equiShader, equiShaderText); //fragmentShaderText
-    gl.compileShader(equiShader);
-    if (!gl.getShaderParameter(equiShader, gl.COMPILE_STATUS)) {
-        throw new Error(gl.getShaderInfoLog(equiShader))
-    };
+    var mainVertexShader = createShader(gl, gl.VERTEX_SHADER, mainVertexShaderText);
+    var mainFragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderText);
+    var prg_main = createProgram(gl, mainVertexShader, mainFragmentShader);
 
-    const mainShader = gl.createShader(gl.FRAGMENT_SHADER);
-    gl.shaderSource(mainShader, fragmentShaderText);
-    gl.compileShader(mainShader);
-    if (!gl.getShaderParameter(mainShader, gl.COMPILE_STATUS)) {
-        throw new Error(gl.getShaderInfoLog(mainShader))
-    };
+    var downsampleFragmentShader = createShader(gl, gl.FRAGMENT_SHADER, downsampleShaderText);
+    var prg_downsample = createProgram(gl, mainVertexShader, downsampleFragmentShader);
     
+    var equiVertexShader = createShader(gl, gl.VERTEX_SHADER, equiVertexShaderText);
+    var equiFragmentShader = createShader(gl, gl.FRAGMENT_SHADER, equiShaderText);
+    var prg_equi = createProgram(gl, equiVertexShader, equiFragmentShader);
 
-    const prg_downsample = gl.createProgram();
-    gl.attachShader(prg_downsample, mainVertexShader);
-    gl.attachShader(prg_downsample, downsampleShader);
-    gl.linkProgram(prg_downsample);
-    if (!gl.getProgramParameter(prg_downsample, gl.LINK_STATUS)) {
-        throw new Error(gl.getProgramInfoLog(prg_downsample))
-    };
+    var main_positionAttributeLocation = gl.getAttribLocation(prg_main, "vertPosition");
+    var main_texCoordAttributeLocation = gl.getAttribLocation(prg_main, "vertTexCoord");
+    var main_mWorldUniformLocation = gl.getUniformLocation(prg_main, "mWorld");
+    var main_mViewUniformLocation = gl.getUniformLocation(prg_main, "mView");
+    var main_mProjUniformLocation = gl.getUniformLocation(prg_main, "mProj");
+    var main_Sampler1UniformLocation = gl.getUniformLocation(prg_main, "sampler_1");
+    var main_Sampler2UniformLocation = gl.getUniformLocation(prg_main, "sampler_2");
+    var main_TopAndBottomUniformLocation = gl.getUniformLocation(prg_main, "topAndBottom");
 
-    const prg_equi = gl.createProgram();
-    gl.attachShader(prg_equi, equiVertexShader);
-    gl.attachShader(prg_equi, equiShader);
-    gl.linkProgram(prg_equi);
-    if (!gl.getProgramParameter(prg_equi, gl.LINK_STATUS)) {
-        throw new Error(gl.getProgramInfoLog(prg_equi))
-    };
+    var downsample_positionAttributeLocation = gl.getAttribLocation(prg_downsample, "vertPosition");
+    var downsample_texCoordAttributeLocation = gl.getAttribLocation(prg_downsample, "vertTexCoord");
+    var downsample_mWorldUniformLocation = gl.getUniformLocation(prg_downsample, "mWorld");
+    var downsample_mViewUniformLocation = gl.getUniformLocation(prg_downsample, "mView");
+    var downsample_mProjUniformLocation = gl.getUniformLocation(prg_downsample, "mProj");
+    var downsample_Sampler1UniformLocation = gl.getUniformLocation(prg_downsample, "sampler_1");
 
-    const prg_main = gl.createProgram();
-    gl.attachShader(prg_main, mainVertexShader);
-    gl.attachShader(prg_main, mainShader);
-    gl.linkProgram(prg_main);
-    if (!gl.getProgramParameter(prg_main, gl.LINK_STATUS)) {
-        throw new Error(gl.getProgramInfoLog(prg_main))
-    };
-    
-    const positionLoc = gl.getAttribLocation(prg_downsample, 'vertPosition');    const main_positionLoc = gl.getAttribLocation(prg_main, 'vertPosition');
-    const texcoordLoc = gl.getAttribLocation(prg_downsample, 'vertTexCoord');    const main_texcoordLoc = gl.getAttribLocation(prg_main, 'vertTexCoord');
+    var equi_positionAttributeLocation = gl.getAttribLocation(prg_equi, "vertPosition");
+    var equi_texCoordAttributeLocation = gl.getAttribLocation(prg_equi, "vertTexCoord");
+    var equi_mWorldUniformLocation = gl.getUniformLocation(prg_equi, "mWorld");
+    var equi_mViewUniformLocation = gl.getUniformLocation(prg_equi, "mView");
+    var equi_mProjUniformLocation = gl.getUniformLocation(prg_equi, "mProj");
+    var equi_Sampler1UniformLocation = gl.getUniformLocation(prg_equi, "sampler_1");
 
-    const mWorldLoc = gl.getUniformLocation(prg_downsample, 'mWorld');           const main_mWorldLoc = gl.getUniformLocation(prg_main, 'mWorld');
-    const mViewLoc = gl.getUniformLocation(prg_downsample, 'mView');             const main_mViewLoc = gl.getUniformLocation(prg_main, 'mView');
-    const mProjLoc = gl.getUniformLocation(prg_downsample, 'mProj');             const main_mProjLoc = gl.getUniformLocation(prg_main, 'mProj');
-    const sampler1Loc = gl.getUniformLocation(prg_downsample, 'sampler_1');      const main_sampler1Loc = gl.getUniformLocation(prg_main, 'sampler_1');
-    const topAndBottomLoc = gl.getUniformLocation(prg_main, 'topAndBottom');        const main_sampler2Loc = gl.getUniformLocation(prg_main, 'sampler_2');
-    //const sampler2Loc = gl.getUniformLocation(prg_downsample, 'sampler_2');
-
-    const equi_positionLoc = gl.getAttribLocation(prg_equi, 'vertPosition');
-    const equi_texcoordLoc = gl.getAttribLocation(prg_equi, 'vertTexCoord');
-    const equi_mWorldLoc = gl.getUniformLocation(prg_equi, 'mWorld');
-    const equi_mViewLoc = gl.getUniformLocation(prg_equi, 'mView');
-    const equi_mProjLoc = gl.getUniformLocation(prg_equi, 'mProj');
-    const equi_sampler1Loc = gl.getUniformLocation(prg_equi, 'sampler_1');
-
-
-
-    const meshData = parseOBJ(equiObjText);
-    console.log(meshData);
-
+    var planePositionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, planePositionBuffer);
     var planeVertices = 
-	[ // X, Y, Z
-		// Front
-		1.0, 1.0, 1.0,      
+	[
 		1.0, -1.0, 1.0,     
-		-1.0, -1.0, 1.0,    
-		-1.0, 1.0, 1.0,     
+        1.0, 1.0, 1.0,
+        -1.0, -1.0, 1.0,    
+        -1.0, 1.0, 1.0,
+        -1.0, -1.0, 1.0,
+        1.0, 1.0, 1.0,  
 	];
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(planeVertices), gl.STATIC_DRAW);
 
-    //planeVertices = meshData.position;
-
+    var planeTexCoordsBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, planeTexCoordsBuffer);
     var planeTexCoords = 
     [ // U V
-        1.0, 0.0, canvas.width, canvas.height,
         1.0, 1.0, canvas.width, canvas.height,
+        1.0, 0.0, canvas.width, canvas.height,
         0.0, 1.0, canvas.width, canvas.height,
-        0.0, 0.0, canvas.width, canvas.height
+        0.0, 0.0, canvas.width, canvas.height,
+        0.0, 1.0, canvas.width, canvas.height,
+        1.0, 0.0, canvas.width, canvas.height,
     ];
-
-    var planeIndices =
-	[
-		// Front
-		1, 0, 2,
-		3, 2, 0,
-	];
-
-    const positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(planeVertices), gl.STATIC_DRAW);
-    
-    const texCoordsBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, texCoordsBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(planeTexCoords), gl.STATIC_DRAW);
 
-    const indicesBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(planeIndices), gl.STATIC_DRAW);
-    
-    // Texture setup
+    var plane_worldMatrix = new Float32Array(16); mat4.identity(plane_worldMatrix);
+    var plane_viewMatrix = new Float32Array(16); mat4.identity(plane_viewMatrix);
+    var plane_projMatrix = new Float32Array(16); mat4.identity(plane_projMatrix);
+
+    // Bind equi mesh stuff here
+
+    var equi_worldMatrix = new Float32Array(16); mat4.identity(equi_worldMatrix);
+    var equi_viewMatrix = new Float32Array(16); mat4.lookAt(equi_viewMatrix, [0,0,-5], [0,0,0], [0,1,0]);
+    var equi_projMatrix = new Float32Array(16); mat4.perspective(equi_projMatrix, glMatrix.toRadian(45), canvas.width / canvas.height, 0.1, 1000.0);
 
     const mainTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, mainTexture);
@@ -268,139 +246,22 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
-
-    // ------------ Frame Buffer Setup ->
-
-    
-    const fbTextureWidth = 750;
-    const fbTextureHeight = 938;
-    const fbTexture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, fbTexture);
-    gl.texImage2D(
-        gl.TEXTURE_2D,
-        0,                // mip level
-        gl.RGBA,          // internal format
-        fbTextureWidth,   // width
-        fbTextureHeight,  // height
-        0,                // border
-        gl.RGBA,          // format
-        gl.UNSIGNED_BYTE, // type
-        null,             // data
-    )
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-
-    const fb = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fbTexture, 0);
-
-
-    // ------------ Rendering ->
-
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-    gl.clearColor(0.05, 0.85, 0.8, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.enableVertexAttribArray(positionLoc);
-    gl.vertexAttribPointer(
-        positionLoc,  // location
-        3,            // size (components per iteration)
-        gl.FLOAT,     // type of to get from buffer
-        false,        // normalize
-        0,            // stride (bytes to advance each iteration)
-        0,            // offset (bytes from start of buffer)
-    );
+    const meshData = parseOBJ(equiObjText);
+    console.log(meshData);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, texCoordsBuffer);
-    gl.enableVertexAttribArray(texcoordLoc);
-    gl.vertexAttribPointer(
-        texcoordLoc,  // location
-        4,            // size (components per iteration)
-        gl.FLOAT,     // type of to get from buffer
-        false,        // normalize
-        0,            // stride (bytes to advance each iteration)
-        0,            // offset (bytes from start of buffer)
-    );
-    
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
-
-    gl.useProgram(prg_downsample);
-
-    let texUnit = 6;
-    gl.activeTexture(gl.TEXTURE0 + texUnit);
-    gl.bindTexture(gl.TEXTURE_2D, mainTexture);
-    gl.uniform1i(sampler1Loc, texUnit);
-
-    var worldMatrix = new Float32Array(16);
-    mat4.identity(worldMatrix);
-    gl.uniformMatrix4fv(mWorldLoc, gl.FALSE, worldMatrix);
-
-    var viewMatrix = new Float32Array(16); 
-    //mat4.lookAt(viewMatrix, [0,0,-5], [0,0,0], [0,1,0]);
-    mat4.identity(viewMatrix);
-    gl.uniformMatrix4fv(mViewLoc, gl.FALSE, viewMatrix);
-
-    var projMatrix = new Float32Array(16);
-    //mat4.perspective(projMatrix, glMatrix.toRadian(45), canvas.width / canvas.height, 0.1, 1000.0);
-    mat4.identity(projMatrix);
-    gl.uniformMatrix4fv(mProjLoc, gl.FALSE, projMatrix);
-    
-    gl.drawElements(gl.TRIANGLES, planeIndices.length, gl.UNSIGNED_SHORT, 0);
-
-
-
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.enableVertexAttribArray(main_positionLoc);
-    gl.vertexAttribPointer(
-        positionLoc,  // location
-        3,            // size (components per iteration)
-        gl.FLOAT,     // type of to get from buffer
-        false,        // normalize
-        0,            // stride (bytes to advance each iteration)
-        0,            // offset (bytes from start of buffer)
-    );
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, texCoordsBuffer);
-    gl.enableVertexAttribArray(main_texcoordLoc);
-    gl.vertexAttribPointer(
-        main_texcoordLoc,  // location
-        4,            // size (components per iteration)
-        gl.FLOAT,     // type of to get from buffer
-        false,        // normalize
-        0,            // stride (bytes to advance each iteration)
-        0,            // offset (bytes from start of buffer)
-    );
-
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
-
-    gl.useProgram(prg_main);
-
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-    texUnit = 3;
-    gl.activeTexture(gl.TEXTURE0 + texUnit);
-    gl.bindTexture(gl.TEXTURE_2D, fbTexture);
-
-    gl.uniform1i(main_sampler1Loc, texUnit);
-    gl.uniformMatrix4fv(main_mWorldLoc, gl.FALSE, worldMatrix);
-    gl.uniformMatrix4fv(main_mViewLoc, gl.FALSE, viewMatrix);
-    gl.uniformMatrix4fv(main_mProjLoc, gl.FALSE, projMatrix);
-
-    gl.clearColor(0.05, 0.85, 0.8, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    gl.drawElements(gl.TRIANGLES, planeIndices.length, gl.UNSIGNED_SHORT, 0);
-
-    
-    // discard and detatch?
+    /*
+    var planeIndices =
+	[
+		// Front
+		1, 0, 2,
+		3, 2, 0,
+	];
+    */
 
     // ------------ Resize ->
-    
 
     const canvasToDisplaySizeMap = new Map([[canvas, [750, 938]]]);
 
@@ -472,16 +333,22 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             let enableVideo = false;
             var newPlaneTexCoords = 
             [ // U V
-                1.0, enableVideo ? uTop : 1 - uTop, canvas.width, displayHeight,
                 1.0, enableVideo ? uBottom : 1 - uBottom, canvas.width, displayHeight,
+                1.0, enableVideo ? uTop : 1 - uTop, canvas.width, displayHeight,
                 0.0, enableVideo ? uBottom : 1 - uBottom, canvas.width, displayHeight,
                 0.0, enableVideo ? uTop : 1 - uTop, canvas.width, displayHeight,
+                0.0, enableVideo ? uBottom : 1 - uBottom, canvas.width, displayHeight,
+                1.0, enableVideo ? uTop : 1 - uTop, canvas.width, displayHeight,
             ]
 
-            gl.bindBuffer(gl.ARRAY_BUFFER, texCoordsBuffer);
+            gl.bindBuffer(gl.ARRAY_BUFFER, planeTexCoordsBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(newPlaneTexCoords), gl.STATIC_DRAW);
-            //gl.useProgram(prg_main);
-            gl.uniform2fv(topAndBottomLoc, [correctUV[2],correctUV[3]]);
+            gl.uniform2fv(main_TopAndBottomUniformLocation, [correctUV[2],correctUV[3]]);
+
+            // gl.useProgram(prg_main);
+            // gl.bindBuffer(gl.ARRAY_BUFFER, texCoordsBuffer);
+            // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(newPlaneTexCoords), gl.STATIC_DRAW);
+            // gl.uniform2fv(topAndBottomLoc, [correctUV[2],correctUV[3]]);
             
             // pro2
             needsInvert = false;
@@ -491,6 +358,9 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
     }
 
     // ------------ Render Loop ->
+
+    var equiRender = true;
+
     var then = 0;
 
     function render(now) {
@@ -502,62 +372,29 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         let redraw = previous_vID != vID || resized;
 
         if(redraw){
-            /*
-            gl.clearColor(0.75, 0.85, 0.8, 1.0);
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    
-            gl.texImage2D(
-                gl.TEXTURE_2D, 
-                0,                  // mip level
-                gl.RGBA,            // internal format
-                gl.RGBA,            // format
-                gl.UNSIGNED_BYTE,   // type
-                imageList[vID][0]     // data
-            );
-
-            gl.drawElements(gl.TRIANGLES, planeIndices.length, gl.UNSIGNED_SHORT, 0);
-            */
-
-            gl.viewport(0, 0, fbTextureWidth, fbTextureHeight);
-            gl.clearColor(0.05, 0.85, 0.8, 1.0);
+            gl.clearColor(0.85, 0.35, 0.8, 1.0);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            
-            gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
-
-            gl.useProgram(prg_downsample);
-            texUnit = 6;
-            gl.activeTexture(gl.TEXTURE0 + texUnit);
-            gl.bindTexture(gl.TEXTURE_2D, mainTexture);
-            gl.texImage2D(
-                gl.TEXTURE_2D, 
-                0,                  // mip level
-                gl.RGBA,            // internal format
-                gl.RGBA,            // format
-                gl.UNSIGNED_BYTE,   // type
-                imageList[vID][0]     // data
-            );
-            gl.uniform1i(sampler1Loc, texUnit);
-
-            gl.drawElements(gl.TRIANGLES, planeIndices.length, gl.UNSIGNED_SHORT, 0);
 
             gl.useProgram(prg_main);
-            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-            
-            texUnit = 3;
-            gl.activeTexture(gl.TEXTURE0 + texUnit);
-            gl.bindTexture(gl.TEXTURE_2D, fbTexture);
-            gl.uniform1i(main_sampler1Loc, texUnit);
-            texUnit = 4;
-            gl.activeTexture(gl.TEXTURE0 + texUnit);
+            gl.enableVertexAttribArray(main_positionAttributeLocation);
+            gl.bindBuffer(gl.ARRAY_BUFFER, planePositionBuffer);
+            gl.vertexAttribPointer(main_positionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+
+            gl.enableVertexAttribArray(main_texCoordAttributeLocation);
+            gl.bindBuffer(gl.ARRAY_BUFFER, planeTexCoordsBuffer);
+            gl.vertexAttribPointer(main_texCoordAttributeLocation, 4, gl.FLOAT, false, 0, 0);
+
+            gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, mainTexture);
-            gl.uniform1i(main_sampler2Loc, texUnit);
 
-            gl.drawElements(gl.TRIANGLES, planeIndices.length, gl.UNSIGNED_SHORT, 0);
+            gl.uniform1i(main_Sampler1UniformLocation, 0);
+            gl.uniformMatrix4fv(main_mWorldUniformLocation, gl.FALSE, plane_worldMatrix);
+            gl.uniformMatrix4fv(main_mViewUniformLocation, gl.FALSE, plane_viewMatrix);
+            gl.uniformMatrix4fv(main_mProjUniformLocation, gl.FALSE, plane_projMatrix);
 
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
         }
 
         previous_vID = vID;
