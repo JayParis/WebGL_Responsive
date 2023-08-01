@@ -53,15 +53,15 @@ void main()
 
    if(blur <= 0.01)
    {
-      Color = texture2D(sampler_1, v_UV);
+      Color = texture2D(sampler_1, u_UV);
    }
    else
    {
-      for(float d = 0.0; d<Pi; d += Pi/Directions)
+      for(float d = 0.0; d < Pi; d += Pi/Directions)
       {
          for(float i = 1.0 / Quality; i <= 1.001; i += 1.0 / Quality)
          {
-            Color += texture2D(sampler_1, v_UV + vec2(cos(d),sin(d)) * Radius * i);		
+            Color += texture2D(sampler_1, u_UV + vec2(cos(d),sin(d)) * Radius * i);		
          }
       }
 
@@ -71,7 +71,8 @@ void main()
    vec4 composite = mix(img_2, Color, blur);
    vec4 darkened = mix(fadeTint, composite, fades);
 
-   gl_FragColor = texture2D(sampler_1,u_UV); //darkened
+   // gl_FragColor = texture2D(sampler_1,u_UV); //darkened
+   gl_FragColor = darkened;
 
    //float stepf = smoothstep(0.995,0.995005,fragTexCoord.y);
    //gl_FragColor = vec4(stepf,stepf,stepf,1.0);

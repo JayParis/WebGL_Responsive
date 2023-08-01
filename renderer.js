@@ -4,7 +4,7 @@ var needsInvert = false;
 var remoteImagesLoadStep = 10; // 1 for all images, 2 for every other
 var imageList = [];
 var vID = 0;
-var previous_vID = 0;
+var previous_vID = 1;
 
 const _supabaseUrl = 'https://cfzcrwfmlxquedvdajiw.supabase.co';
 
@@ -246,24 +246,36 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         -1.0, -1.0, 1.0,
         1.0, 1.0, 1.0,  
 	];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(meshData.position), gl.STATIC_DRAW); //planeVertices
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(planeVertices), gl.STATIC_DRAW); //planeVertices
 
     var planeTexCoordsBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, planeTexCoordsBuffer);
     var planeTexCoords = 
     [ // U V
-        1.0, 1.0, canvas.width, canvas.height,
         1.0, 0.0, canvas.width, canvas.height,
-        0.0, 1.0, canvas.width, canvas.height,
+        1.0, 1.0, canvas.width, canvas.height,
         0.0, 0.0, canvas.width, canvas.height,
         0.0, 1.0, canvas.width, canvas.height,
-        1.0, 0.0, canvas.width, canvas.height,
+        0.0, 0.0, canvas.width, canvas.height,
+        1.0, 1.0, canvas.width, canvas.height,
     ];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(meshData.texcoord), gl.STATIC_DRAW); //planeTexCoords
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(planeTexCoords), gl.STATIC_DRAW); //planeTexCoords
+
+    var downsamplePlaneTexCoordsBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, downsamplePlaneTexCoordsBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(planeTexCoords), gl.STATIC_DRAW); //planeTexCoords
 
     var plane_worldMatrix = new Float32Array(16); mat4.identity(plane_worldMatrix);
     var plane_viewMatrix = new Float32Array(16); mat4.identity(plane_viewMatrix);
     var plane_projMatrix = new Float32Array(16); mat4.identity(plane_projMatrix);
+
+    var equiPositionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, equiPositionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(meshData.position), gl.STATIC_DRAW);
+
+    var equiTexCoordsBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, equiTexCoordsBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(meshData.texcoord), gl.STATIC_DRAW);
 
     // Bind equi mesh stuff here
 
@@ -299,6 +311,33 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 		3, 2, 0,
 	];
     */
+
+    // ------------ Frame Buffer Setup ->
+
+    const fbTextureWidth = 750;
+    const fbTextureHeight = 938;
+    const fbTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, fbTexture);
+    gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,                // mip level
+        gl.RGBA,          // internal format
+        fbTextureWidth,   // width
+        fbTextureHeight,  // height
+        0,                // border
+        gl.RGBA,          // format
+        gl.UNSIGNED_BYTE, // type
+        null,             // data
+    );
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT); // MIRRORED_REPEAT
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
+
+    const fb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fbTexture, 0);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
     // ------------ Resize ->
 
@@ -380,9 +419,9 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
                 1.0, enableVideo ? uTop : 1 - uTop, canvas.width, displayHeight,
             ]
 
-            // gl.bindBuffer(gl.ARRAY_BUFFER, planeTexCoordsBuffer);
-            // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(newPlaneTexCoords), gl.STATIC_DRAW);
-            // gl.uniform2fv(main_TopAndBottomUniformLocation, [correctUV[2],correctUV[3]]);
+            gl.bindBuffer(gl.ARRAY_BUFFER, planeTexCoordsBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(newPlaneTexCoords), gl.STATIC_DRAW);
+            gl.uniform2fv(main_TopAndBottomUniformLocation, [correctUV[2],correctUV[3]]);
 
             needsInvert = false;
         }
@@ -392,7 +431,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
     // ------------ Render Loop ->
 
-    var equiRender = false;
+    var equiRender = true;
 
     var then = 0;
 
@@ -406,12 +445,67 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
         if(redraw){
             if(equiRender){
+                gl.viewport(0, 0, fbTextureWidth, fbTextureHeight);
+                gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
 
-            }else{
+                gl.clearColor(0.25, 0.35, 0.8, 1.0);
+                gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+                gl.useProgram(prg_equi);
+
+                gl.enableVertexAttribArray(equi_positionAttributeLocation);
+                gl.bindBuffer(gl.ARRAY_BUFFER, equiPositionBuffer);
+                gl.vertexAttribPointer(equi_positionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+
+                gl.enableVertexAttribArray(equi_texCoordAttributeLocation);
+                gl.bindBuffer(gl.ARRAY_BUFFER, equiTexCoordsBuffer);
+                gl.vertexAttribPointer(equi_texCoordAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, mainTexture);
+
+                mat4.identity(equi_worldMatrix);
+                mat4.lookAt(equi_viewMatrix, [0,0,-3], [0,0,0], [0,1,0]);
+                mat4.perspective(equi_projMatrix, glMatrix.toRadian(45), fbTextureWidth / fbTextureHeight, 0.1, 1000.0);
+
+                gl.uniform1i(equi_Sampler1UniformLocation, 0);
+                gl.uniformMatrix4fv(equi_mWorldUniformLocation, gl.FALSE, equi_worldMatrix);
+                gl.uniformMatrix4fv(equi_mViewUniformLocation, gl.FALSE, equi_viewMatrix);
+                gl.uniformMatrix4fv(equi_mProjUniformLocation, gl.FALSE, equi_projMatrix);
+
+                gl.drawArrays(gl.TRIANGLES, 0, meshData.position.length / 3); //6
+            } else {
+                gl.viewport(0, 0, fbTextureWidth, fbTextureHeight);
+                gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+
+                gl.clearColor(0.25, 0.35, 0.8, 1.0);
+                gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+                gl.useProgram(prg_downsample);
+
+                gl.enableVertexAttribArray(downsample_positionAttributeLocation);
+                gl.bindBuffer(gl.ARRAY_BUFFER, planePositionBuffer);
+                gl.vertexAttribPointer(downsample_positionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
+
+                gl.enableVertexAttribArray(downsample_texCoordAttributeLocation);
+                gl.bindBuffer(gl.ARRAY_BUFFER, downsamplePlaneTexCoordsBuffer);
+                gl.vertexAttribPointer(downsample_texCoordAttributeLocation, 4, gl.FLOAT, false, 0, 0);
+
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, mainTexture);
+
+                gl.uniform1i(downsample_Sampler1UniformLocation, 0);
+                gl.uniformMatrix4fv(downsample_mWorldUniformLocation, gl.FALSE, plane_worldMatrix);
+                gl.uniformMatrix4fv(downsample_mViewUniformLocation, gl.FALSE, plane_viewMatrix);
+                gl.uniformMatrix4fv(downsample_mProjUniformLocation, gl.FALSE, plane_projMatrix);
+
+                gl.drawArrays(gl.TRIANGLES, 0, 6); //6
             }
+            
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-            gl.clearColor(0.85, 0.35, 0.8, 1.0);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+            gl.clearColor(0.25, 0.35, 0.8, 1.0);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
             gl.useProgram(prg_main);
@@ -422,21 +516,21 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
             gl.enableVertexAttribArray(main_texCoordAttributeLocation);
             gl.bindBuffer(gl.ARRAY_BUFFER, planeTexCoordsBuffer);
-            gl.vertexAttribPointer(main_texCoordAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+            gl.vertexAttribPointer(main_texCoordAttributeLocation, 4, gl.FLOAT, false, 0, 0);
 
-            gl.activeTexture(gl.TEXTURE0);
+            gl.activeTexture(gl.TEXTURE1);
+            gl.bindTexture(gl.TEXTURE_2D, fbTexture);
+            gl.activeTexture(gl.TEXTURE2);
             gl.bindTexture(gl.TEXTURE_2D, mainTexture);
+            
+            gl.uniform1i(main_Sampler1UniformLocation, 1);
+            gl.uniform1i(main_Sampler2UniformLocation, equiRender ? 1 : 2);
+            gl.uniformMatrix4fv(main_mWorldUniformLocation, gl.FALSE, plane_worldMatrix);
+            gl.uniformMatrix4fv(main_mViewUniformLocation, gl.FALSE, plane_viewMatrix);
+            gl.uniformMatrix4fv(main_mProjUniformLocation, gl.FALSE, plane_projMatrix);
 
-            mat4.identity(equi_worldMatrix);
-            mat4.lookAt(equi_viewMatrix, [0,0,-6], [0,0,0], [0,1,0]);
-            mat4.perspective(equi_projMatrix, glMatrix.toRadian(45), canvas.width / canvas.height, 0.1, 1000.0);
-
-            gl.uniform1i(main_Sampler1UniformLocation, 0);
-            gl.uniformMatrix4fv(main_mWorldUniformLocation, gl.FALSE, equi_worldMatrix);
-            gl.uniformMatrix4fv(main_mViewUniformLocation, gl.FALSE, equi_viewMatrix);
-            gl.uniformMatrix4fv(main_mProjUniformLocation, gl.FALSE, equi_projMatrix);
-
-            gl.drawArrays(gl.TRIANGLES, 0, meshData.position.length / 3); //6
+            gl.drawArrays(gl.TRIANGLES, 0, 6); //6
+            
         }
 
         previous_vID = vID;
