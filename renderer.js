@@ -74,7 +74,17 @@ async function loadShadersAndInitRenderer(){
 }
 
 function parseOBJ(text) {
-    const OBJIndices = [];
+    // because indices are base 1 let's just fill in the 0th data
+    const objPositions = [[0, 0, 0]];
+    const objTexcoords = [[0, 0]];
+    const objNormals = [[0, 0, 0]];
+  
+    // same order as `f` indices
+    const objVertexData = [
+      objPositions,
+      objTexcoords,
+      objNormals,
+    ];
   
     // same order as `f` indices
     let webglVertexData = [
@@ -83,17 +93,44 @@ function parseOBJ(text) {
       [],   // normals
     ];
   
+    function newGeometry() {
+      // If there is an existing geometry and it's
+      // not empty then start a new one.
+      if (geometry && geometry.data.position.length) {
+        geometry = undefined;
+      }
+      setGeometry();
+    }
+  
+    function addVertex(vert) {
+      const ptn = vert.split('/');
+      ptn.forEach((objIndexStr, i) => {
+        if (!objIndexStr) {
+          return;
+        }
+        const objIndex = parseInt(objIndexStr);
+        const index = objIndex + (objIndex >= 0 ? 0 : objVertexData[i].length);
+        webglVertexData[i].push(...objVertexData[i][index]);
+      });
+    }
+  
     const keywords = {
       v(parts) {
-        webglVertexData[0].push(...parts.map(parseFloat));
+        objPositions.push(parts.map(parseFloat));
+      },
+      vn(parts) {
+        objNormals.push(parts.map(parseFloat));
       },
       vt(parts) {
-		webglVertexData[1].push(...parts.map(parseFloat));
+        // should check for missing v and extra w?
+        objTexcoords.push(parts.map(parseFloat));
       },
       f(parts) {
-        for (let i = 0; i < parts.length; i++) {
-            let firstVal = parts[i].split('/')[0];
-            OBJIndices.push(parseInt(firstVal) - 1);
+        const numTriangles = parts.length - 2;
+        for (let tri = 0; tri < numTriangles; ++tri) {
+          addVertex(parts[0]);
+          addVertex(parts[tri + 1]);
+          addVertex(parts[tri + 2]);
         }
       },
     };
@@ -113,6 +150,7 @@ function parseOBJ(text) {
       const parts = line.split(/\s+/).slice(1);
       const handler = keywords[keyword];
       if (!handler) {
+        //console.warn('unhandled keyword:', keyword);  // eslint-disable-line no-console
         continue;
       }
       handler(parts, unparsedArgs);
@@ -122,7 +160,6 @@ function parseOBJ(text) {
       position: webglVertexData[0],
       texcoord: webglVertexData[1],
       normal: webglVertexData[2],
-      indices: OBJIndices,
     };
 }
 
@@ -195,6 +232,9 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
     var equi_mProjUniformLocation = gl.getUniformLocation(prg_equi, "mProj");
     var equi_Sampler1UniformLocation = gl.getUniformLocation(prg_equi, "sampler_1");
 
+    const meshData = parseOBJ(equiObjText);
+    console.log(meshData);
+
     var planePositionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, planePositionBuffer);
     var planeVertices = 
@@ -206,7 +246,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         -1.0, -1.0, 1.0,
         1.0, 1.0, 1.0,  
 	];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(planeVertices), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(meshData.position), gl.STATIC_DRAW); //planeVertices
 
     var planeTexCoordsBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, planeTexCoordsBuffer);
@@ -219,7 +259,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         0.0, 1.0, canvas.width, canvas.height,
         1.0, 0.0, canvas.width, canvas.height,
     ];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(planeTexCoords), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(meshData.texcoord), gl.STATIC_DRAW); //planeTexCoords
 
     var plane_worldMatrix = new Float32Array(16); mat4.identity(plane_worldMatrix);
     var plane_viewMatrix = new Float32Array(16); mat4.identity(plane_viewMatrix);
@@ -228,7 +268,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
     // Bind equi mesh stuff here
 
     var equi_worldMatrix = new Float32Array(16); mat4.identity(equi_worldMatrix);
-    var equi_viewMatrix = new Float32Array(16); mat4.lookAt(equi_viewMatrix, [0,0,-5], [0,0,0], [0,1,0]);
+    var equi_viewMatrix = new Float32Array(16); mat4.lookAt(equi_viewMatrix, [0,0,-6], [0,0,0], [0,1,0]);
     var equi_projMatrix = new Float32Array(16); mat4.perspective(equi_projMatrix, glMatrix.toRadian(45), canvas.width / canvas.height, 0.1, 1000.0);
 
     const mainTexture = gl.createTexture();
@@ -249,8 +289,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
 
-    const meshData = parseOBJ(equiObjText);
-    console.log(meshData);
+    
 
     /*
     var planeIndices =
@@ -341,16 +380,10 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
                 1.0, enableVideo ? uTop : 1 - uTop, canvas.width, displayHeight,
             ]
 
-            gl.bindBuffer(gl.ARRAY_BUFFER, planeTexCoordsBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(newPlaneTexCoords), gl.STATIC_DRAW);
-            gl.uniform2fv(main_TopAndBottomUniformLocation, [correctUV[2],correctUV[3]]);
-
-            // gl.useProgram(prg_main);
-            // gl.bindBuffer(gl.ARRAY_BUFFER, texCoordsBuffer);
+            // gl.bindBuffer(gl.ARRAY_BUFFER, planeTexCoordsBuffer);
             // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(newPlaneTexCoords), gl.STATIC_DRAW);
-            // gl.uniform2fv(topAndBottomLoc, [correctUV[2],correctUV[3]]);
-            
-            // pro2
+            // gl.uniform2fv(main_TopAndBottomUniformLocation, [correctUV[2],correctUV[3]]);
+
             needsInvert = false;
         }
 
@@ -359,7 +392,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
     // ------------ Render Loop ->
 
-    var equiRender = true;
+    var equiRender = false;
 
     var then = 0;
 
@@ -372,6 +405,11 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         let redraw = previous_vID != vID || resized;
 
         if(redraw){
+            if(equiRender){
+
+            }else{
+
+            }
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
             gl.clearColor(0.85, 0.35, 0.8, 1.0);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -384,17 +422,21 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
             gl.enableVertexAttribArray(main_texCoordAttributeLocation);
             gl.bindBuffer(gl.ARRAY_BUFFER, planeTexCoordsBuffer);
-            gl.vertexAttribPointer(main_texCoordAttributeLocation, 4, gl.FLOAT, false, 0, 0);
+            gl.vertexAttribPointer(main_texCoordAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, mainTexture);
 
-            gl.uniform1i(main_Sampler1UniformLocation, 0);
-            gl.uniformMatrix4fv(main_mWorldUniformLocation, gl.FALSE, plane_worldMatrix);
-            gl.uniformMatrix4fv(main_mViewUniformLocation, gl.FALSE, plane_viewMatrix);
-            gl.uniformMatrix4fv(main_mProjUniformLocation, gl.FALSE, plane_projMatrix);
+            mat4.identity(equi_worldMatrix);
+            mat4.lookAt(equi_viewMatrix, [0,0,-6], [0,0,0], [0,1,0]);
+            mat4.perspective(equi_projMatrix, glMatrix.toRadian(45), canvas.width / canvas.height, 0.1, 1000.0);
 
-            gl.drawArrays(gl.TRIANGLES, 0, 6);
+            gl.uniform1i(main_Sampler1UniformLocation, 0);
+            gl.uniformMatrix4fv(main_mWorldUniformLocation, gl.FALSE, equi_worldMatrix);
+            gl.uniformMatrix4fv(main_mViewUniformLocation, gl.FALSE, equi_viewMatrix);
+            gl.uniformMatrix4fv(main_mProjUniformLocation, gl.FALSE, equi_projMatrix);
+
+            gl.drawArrays(gl.TRIANGLES, 0, meshData.position.length / 3); //6
         }
 
         previous_vID = vID;
