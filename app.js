@@ -294,7 +294,13 @@ function lerp (start, end, amt) {
     return (1-amt)*start+amt*end
 }
 
+// Debug
+
 function ContButtonClicked(){
     console.log("ContButtonClicked");
 
+}
+
+function SendCSSWidth(){
+    document.getElementById('ol-id').style.display = "none";
 }

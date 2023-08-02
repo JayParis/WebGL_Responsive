@@ -1,6 +1,8 @@
 :root {
     --main-height: 1000px;
 
+    --loading-prog: 1116px;
+
     --p0: black;
     --p1: transparent;
 
@@ -37,7 +39,7 @@
     background: rgba(0, 0, 0, 0.58);
     white-space: pre;
     font-family: monospace;
-    display: fixed;
+    display: none;
 }
 
 body {
@@ -395,7 +397,30 @@ input[type=range]:focus::-moz-range-track {
     flex: 2;
     max-width: calc(var(--main-height) * 0.799573561);
     overflow: hidden;
+    position: relative;
 }
+
+.loading-cont {
+    /* background-color: yellow; */
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    display: grid;
+    place-items: center;
+}
+
+.loading-svg-cont {
+    /* background-color: rgb(108, 10, 169); */
+    width: 130px;
+    height: 130px;
+}
+
+#Mask-2 path{
+    stroke-dashoffset: var(--loading-prog);
+}
+@keyframes big-leaf_o { 0% { opacity: 0.25; } 100% { opacity: 1; } }
+@keyframes small-leaf_o { 0% { opacity: 0.25; } 100% { opacity: 1; } }
+
 
 .para-column {
     /* background-color: #3ff; */
@@ -576,4 +601,20 @@ input[type=range]:focus::-moz-range-track {
     padding-right: 45px;
     margin-top: auto;
     margin-bottom: auto;
+}
+
+
+
+.ol {
+    position: fixed;
+    background-color: #fafafa;
+    width: 100%;
+    height: 100%;
+    z-index: 11;
+}
+.ol-b {
+    float: right;
+    height: 100%;
+    width: 20px;
+    opacity: 10%;
 }

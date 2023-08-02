@@ -6,8 +6,8 @@ var enableVideo = false;
 var copyVideo = false;
 var equiRender = false;
 
-
-var remoteImagesLoadStep = 10; // 1 for all images, 2 for every other
+var targetLoadProg = 0;
+var remoteImagesLoadStep = 1; // 1 for all images, 2 for every other, 10 for quick debug
 var imageList = [];
 var vID = 0;
 var previous_vID = 1;
@@ -18,6 +18,7 @@ var previous_state = 1;
 const _supabaseUrl = 'https://cfzcrwfmlxquedvdajiw.supabase.co';
 
 var equiImage = new Image();
+
 
 function LoadRenderer(){
     //loadImageURLs(true);
@@ -41,9 +42,14 @@ function loadImageURLs(HQ){
                 createImageBitmap(file).then(img => {
                     imageList.push([img, i]);
                     
-                    console.log(i);
+                    let lp = imageList.length / (160 / remoteImagesLoadStep);
+                    console.log(lp);
+                    targetLoadProg = lp;
 
-                    if(imageList.length == (160 / remoteImagesLoadStep))
+                    let strokeDashOffset = lerp(1116,493,lp);
+                    root.style.setProperty('--loading-prog', strokeDashOffset + 'px');
+
+                    if(lp >= 1)
                         SortImages();
                 });
             })
@@ -51,6 +57,17 @@ function loadImageURLs(HQ){
 }
 
 function SortImages(){
+    let leaf_s = document.getElementById("small-leaf");
+    leaf_s.style.animation = "small-leaf_o";
+    leaf_s.style.animationTimingFunction = "linear";
+    leaf_s.style.animationFillMode = "both";
+    leaf_s.style.animationDuration = "0.3s";
+    let leaf_b = document.getElementById("big-leaf");
+    leaf_b.style.animation = "small-leaf_o";
+    leaf_b.style.animationTimingFunction = "linear";
+    leaf_b.style.animationFillMode = "both";
+    leaf_b.style.animationDuration = "0.3s";
+
     imageList.sort((a, b) => {
         if(a[1] > b[1])
             return 1;
@@ -59,10 +76,16 @@ function SortImages(){
         return 0;
     });
     console.log(imageList[0]);
-    loadShadersAndInitRenderer();
+    setTimeout(HideLoader, 500);
+    LoadShadersAndInitRenderer();
 }
 
-async function loadShadersAndInitRenderer(){
+function HideLoader(){
+    document.getElementById("lc-id").style.display = "none";
+    console.log("Hidden");
+}
+
+async function LoadShadersAndInitRenderer(){
 
     const mainVertexShaderText = await fetch('./Shaders/main_vertex.glsl')
         .then(result => result.text());
@@ -698,6 +721,11 @@ function DB_0(){
     vID += 1;
     if(vID >= imageList.length - 1)
         vID = 0;
+
+    if(!hasInit){
+        LoadRenderer();
+        console.log("Init Renderer Button");
+    }
 }
 
 function DB_1(){
