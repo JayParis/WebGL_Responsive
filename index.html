@@ -18,7 +18,9 @@
 </head>
 <body onload="LoadedPage(); LoadRenderer();">
     <div class="bg-blur">
-        <button id="demo-btn" onclick="ContButtonClicked(); RendererDebugButton();" style="position: fixed;">Press</button>
+        <button id="demo-btn" onclick="ContButtonClicked(); DB_0();" style="position: fixed;">DB_0</button>
+        <button id="demo-btn" onclick="DB_1();" style="position: fixed; transform: translateY(30px);">DB_1</button>
+        <button id="demo-btn" onclick="DB_2();" style="position: fixed; transform: translateY(60px);">DB_2</button>
         <div class="group-container">
             <div class="settings-column">
                 <div class="settings-block">
@@ -163,6 +165,8 @@
                 </div>
             </div>
             <div class="main-column" id="main-id">
+                <script src="https://greggman.github.io/webgl-memory/webgl-memory.js" crossorigin></script>
+                    <div id="info"></div>
                 <canvas id="application" width="750" height="938"></canvas>
             </div>
             <div class="para-column">

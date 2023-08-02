@@ -26,6 +26,20 @@
     --next-arrow-hover: #ffffffe4;
 }
 
+#info {
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-size: 10px;
+    margin-top: 90px;
+    padding: 0.25em;
+    color: white;
+    background: rgba(0, 0, 0, 0.58);
+    white-space: pre;
+    font-family: monospace;
+    display: fixed;
+}
+
 body {
     padding: 0;
     margin: 0;

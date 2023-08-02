@@ -136,21 +136,7 @@ function SetUpIconEvent(pathID, hoverID, varName, animName, timing){
     }, false);
 }
 
-function ContButtonClicked(){
-    console.log("ContButtonClicked");
 
-    //hovered = !hovered;
-
-    /*
-    let outline = document.getElementById("path5649");
-    outline.style.animation = hovered ? "path5649_d" : "path5649_s";
-    outline.style.animationTimingFunction = "linear";
-    outline.style.animationFillMode = "both";
-    outline.style.animationDuration = "0.25s";
-    */
-
-    
-}
 
 function ToggleHoverState(hov){
 
@@ -306,4 +292,9 @@ function SendCSSHeight(){
 
 function lerp (start, end, amt) {
     return (1-amt)*start+amt*end
+}
+
+function ContButtonClicked(){
+    console.log("ContButtonClicked");
+
 }

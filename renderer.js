@@ -1,21 +1,31 @@
 var hasInit = false;
-var needsInvert = false;
+
+var rebindBuffer = false;
+var video = undefined;
+var enableVideo = false;
+var copyVideo = false;
+var equiRender = false;
+
 
 var remoteImagesLoadStep = 10; // 1 for all images, 2 for every other
 var imageList = [];
 var vID = 0;
 var previous_vID = 1;
+var state = 0;
+var previous_state = 1;
+
 
 const _supabaseUrl = 'https://cfzcrwfmlxquedvdajiw.supabase.co';
 
 var equiImage = new Image();
 
 function LoadRenderer(){
+    //loadImageURLs(true);
     equiImage.onload = function() {
         console.log("Equi Image Loaded");
         loadImageURLs(true);
 	};
-    equiImage.src = './Images/Page_1_Frame_1_Equi4K_JPG3.jpg';
+    equiImage.src = './Images/Page_1_Frame_1_Equi4K5_WEBP.webp';
 }
 
 function loadImageURLs(HQ){
@@ -339,6 +349,8 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
+    var currentVideo = setupVideo("https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/Video_F0001_1500.mp4");
+
     // ------------ Resize ->
 
     const canvasToDisplaySizeMap = new Map([[canvas, [750, 938]]]);
@@ -383,7 +395,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
     function resizeCanvasToDisplaySize(canvas) {
         const [displayWidth, displayHeight] = canvasToDisplaySizeMap.get(canvas);
-        const needResize = canvas.width  !== displayWidth || canvas.height !== displayHeight || needsInvert;
+        const needResize = canvas.width  !== displayWidth || canvas.height !== displayHeight || rebindBuffer;
 
         if (needResize) {
             // Make the canvas the same size
@@ -408,7 +420,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             console.log("Width: " + displayWidth);
             console.log("Height: " + displayHeight);
 
-            let enableVideo = false;
+            //let enableVideo = false;
             var newPlaneTexCoords = 
             [ // U V
                 1.0, enableVideo ? uBottom : 1 - uBottom, canvas.width, displayHeight,
@@ -423,7 +435,8 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(newPlaneTexCoords), gl.STATIC_DRAW);
             gl.uniform2fv(main_TopAndBottomUniformLocation, [correctUV[2],correctUV[3]]);
 
-            needsInvert = false;
+            console.log("Rebinding buffer data");
+            rebindBuffer = false;
         }
 
         return needResize;
@@ -431,7 +444,6 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
     // ------------ Render Loop ->
 
-    var equiRender = true;
 
     var then = 0;
 
@@ -440,8 +452,37 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         var deltaTime = now - then;
         then = now;
         
+        let newState = previous_state != state;
+        if(newState){
+            switch (state) {
+                case 0:
+                    rebindBuffer = true;
+                    break;
+                case 1:
+                    rebindBuffer = true;
+                    break;
+                case 2:
+                    gl.activeTexture(gl.TEXTURE0);
+                    gl.bindTexture(gl.TEXTURE_2D, mainTexture);
+                    gl.texImage2D(
+                        gl.TEXTURE_2D, 
+                        0,
+                        gl.RGBA,
+                        gl.RGBA,
+                        gl.UNSIGNED_BYTE,
+                        equiImage
+                    );
+                    rebindBuffer = true;
+                    break;
+            }
+            rebindBuffer = true;
+            enableVideo = state == 1;
+            equiRender = state == 2;
+            console.log("New State");
+        }        
+
         let resized = resizeCanvasToDisplaySize(gl.canvas);
-        let redraw = previous_vID != vID || resized;
+        let redraw = previous_vID != vID || resized || copyVideo;
 
         if(redraw){
             if(equiRender){
@@ -463,9 +504,17 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
                 gl.activeTexture(gl.TEXTURE0);
                 gl.bindTexture(gl.TEXTURE_2D, mainTexture);
+                // gl.texImage2D(
+                //     gl.TEXTURE_2D, 
+                //     0,                  // mip level
+                //     gl.RGBA,            // internal format
+                //     gl.RGBA,            // format
+                //     gl.UNSIGNED_BYTE,   // type
+                //     equiImage     // data
+                // );
 
                 mat4.identity(equi_worldMatrix);
-                mat4.lookAt(equi_viewMatrix, [0,0,-3], [0,0,0], [0,1,0]);
+                mat4.lookAt(equi_viewMatrix, [0,0,-1], [0.31,0,0], [0,1,0]);
                 mat4.perspective(equi_projMatrix, glMatrix.toRadian(45), fbTextureWidth / fbTextureHeight, 0.1, 1000.0);
 
                 gl.uniform1i(equi_Sampler1UniformLocation, 0);
@@ -493,6 +542,14 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
                 gl.activeTexture(gl.TEXTURE0);
                 gl.bindTexture(gl.TEXTURE_2D, mainTexture);
+                gl.texImage2D(
+                    gl.TEXTURE_2D, 
+                    0,                  // mip level
+                    gl.RGBA,            // internal format
+                    gl.RGBA,            // format
+                    gl.UNSIGNED_BYTE,   // type
+                    (enableVideo && copyVideo) ? currentVideo : imageList[vID][0]
+                );
 
                 gl.uniform1i(downsample_Sampler1UniformLocation, 0);
                 gl.uniformMatrix4fv(downsample_mWorldUniformLocation, gl.FALSE, plane_worldMatrix);
@@ -534,12 +591,64 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         }
 
         previous_vID = vID;
+        previous_state = state;
+
+        // if (ext) { // Memory Info
+        //     const info = ext.getMemoryInfo();
+        //     document.querySelector('#info').textContent = JSON.stringify(info, null, 2);
+        // }
 
         requestAnimationFrame(render);
     }
     requestAnimationFrame(render);
     
     console.log("Running Demo");
+}
+
+function setupVideo(url) {
+    video = document.createElement("video");
+  
+    let playing = false;
+    let timeupdate = false;
+  
+    video.crossOrigin = "anonymous";
+    video.playsInline = true;
+    video.muted = true;
+    video.loop = true;
+  
+    // Waiting for these 2 events ensures
+    // there is data in the video
+  
+    video.addEventListener(
+      "playing",
+      () => {
+        playing = true;
+        //console.log("Video wants to play");
+        checkReady();
+      },
+      true
+    );
+  
+    video.addEventListener(
+      "timeupdate",
+      () => {
+        timeupdate = true;
+        //console.log("Video wants to update");
+        checkReady();
+      },
+      true
+    );
+  
+    video.src = url;
+    video.play();
+  
+    function checkReady() {
+      if (playing && timeupdate) {
+        copyVideo = true;
+      }
+    }
+  
+    return video;
 }
 
 function getParaOffset(containerWidth, containerHeight, safeArea){
@@ -579,13 +688,30 @@ function fitImageToUV(containerWidth, containerHeight, safeArea, desktop){
     }
 }
 
-function RendererDebugButton(){
+// --------------- DEBUG
+
+function DB_0(){
+    console.log("DB_1");
+
+    state = 0;
 
     vID += 1;
     if(vID >= imageList.length - 1)
         vID = 0;
+}
 
-    console.log(vID);
+function DB_1(){
+    console.log("DB_2");
+
+    state = 1;
+
     
-    console.log("This is a renderer debug button");
+}
+
+function DB_2(){
+    console.log("DB_3");
+
+    state = 2;
+
+    
 }
