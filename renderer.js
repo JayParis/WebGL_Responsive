@@ -387,6 +387,8 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
+    gl.useProgram(prg_main);
+
     var videoElement = document.createElement("video");
     // var currentVideo = setupVideo("https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/Video_F0001_1500.mp4");
 
@@ -760,6 +762,9 @@ function DB_2(){
     console.log("DB_3");
 
     state = 2;
+}
 
-    
+function DB_3(){
+    HQ = true;
+    DB_0();
 }
