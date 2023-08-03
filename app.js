@@ -83,6 +83,7 @@ function LoadedPage() {
         CheckParaScroll();
     });
     SendCSSHeight();
+    document.getElementById('olt-id').innerHTML = is_touch_enabled();
 
     document.getElementById('pb-id').addEventListener('scroll', function(){
         let para = document.getElementById('pb-id');
@@ -372,6 +373,12 @@ function detectMob() {
     return toMatch.some((toMatchItem) => {
         return navigator.userAgent.match(toMatchItem);
     });
+}
+
+function is_touch_enabled() {
+    return ( 'ontouchstart' in window ) ||
+           ( navigator.maxTouchPoints > 0 ) ||
+           ( navigator.msMaxTouchPoints > 0 );
 }
 
 // Debug
