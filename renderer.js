@@ -6,34 +6,47 @@ var enableVideo = false;
 var copyVideo = false;
 var equiRender = false;
 
-var targetLoadProg = 0;
 var remoteImagesLoadStep = 1; // 1 for all images, 2 for every other, 10 for quick debug
+var HQ = true;
+
+var remoteLoad = false;
+var targetLoadProg = 0;
 var imageList = [];
 var vID = 0;
 var previous_vID = 1;
 var state = 0;
 var previous_state = 1;
 
-
-const _supabaseUrl = 'https://cfzcrwfmlxquedvdajiw.supabase.co';
-
 var equiImage = new Image();
 
 
+const _supabaseUrl = 'https://cfzcrwfmlxquedvdajiw.supabase.co';
+
+
+
 function LoadRenderer(){
-    //loadImageURLs(true);
-    equiImage.onload = function() {
-        console.log("Equi Image Loaded");
-        loadImageURLs(true);
-	};
-    equiImage.src = './Images/Page_1_Frame_1_Equi4K5_WEBP.webp';
+    //loadImageURLs();
+    let path = HQ ? '/storage/v1/object/public/main-pages/Page_1_Main_' 
+        : '/storage/v1/object/public/main-pages/750/Page_1_Main_';
+    fetch(_supabaseUrl + path + "0001" + '.webp')
+        .then(res => res.blob())
+        .then(blob => {
+            const file = new File([blob], "0001", {type: blob.type});
+            createImageBitmap(file).then(img => {
+                imageList.push([img, 1]);
+                LoadShadersAndInitRenderer();
+            })
+        });
+    
 }
 
-function loadImageURLs(HQ){
+function loadImageURLs(){
     let path = HQ ? '/storage/v1/object/public/main-pages/Page_1_Main_' 
         : '/storage/v1/object/public/main-pages/750/Page_1_Main_';
     
     for (let i = 1; i <= 160; i += remoteImagesLoadStep) { //160
+        if(i == 1) continue;
+
         let end = i.toString().padStart(4,'0');
         fetch(_supabaseUrl + path + end + '.webp')
             .then(res => res.blob())
@@ -51,8 +64,8 @@ function loadImageURLs(HQ){
 
                     if(lp >= 1)
                         SortImages();
-                });
-            })
+                })
+            });
     }
 }
 
@@ -77,7 +90,7 @@ function SortImages(){
     });
     console.log(imageList[0]);
     setTimeout(HideLoader, 500);
-    LoadShadersAndInitRenderer();
+    //LoadShadersAndInitRenderer();
 }
 
 function HideLoader(){
@@ -324,7 +337,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         gl.RGBA,            // internal format
         gl.RGBA,            // format
         gl.UNSIGNED_BYTE,   // type
-        imageList[1][0]     // data
+        imageList[0][0]     // data
     );
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT); // MIRRORED_REPEAT
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
@@ -505,9 +518,10 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         }        
 
         let resized = resizeCanvasToDisplaySize(gl.canvas);
-        let redraw = previous_vID != vID || resized || copyVideo;
+        let redraw = previous_vID != vID || resized || (enableVideo && copyVideo);
 
         if(redraw){
+            console.log("REDRAW");
             if(equiRender){
                 gl.viewport(0, 0, fbTextureWidth, fbTextureHeight);
                 gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
@@ -527,17 +541,10 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
                 gl.activeTexture(gl.TEXTURE0);
                 gl.bindTexture(gl.TEXTURE_2D, mainTexture);
-                // gl.texImage2D(
-                //     gl.TEXTURE_2D, 
-                //     0,                  // mip level
-                //     gl.RGBA,            // internal format
-                //     gl.RGBA,            // format
-                //     gl.UNSIGNED_BYTE,   // type
-                //     equiImage     // data
-                // );
+
 
                 mat4.identity(equi_worldMatrix);
-                mat4.lookAt(equi_viewMatrix, [0,0,-1], [0.31,0,0], [0,1,0]);
+                mat4.lookAt(equi_viewMatrix, [0,0,-0.00001], [0.31,0,0], [0,1,0]);
                 mat4.perspective(equi_projMatrix, glMatrix.toRadian(45), fbTextureWidth / fbTextureHeight, 0.1, 1000.0);
 
                 gl.uniform1i(equi_Sampler1UniformLocation, 0);
@@ -625,6 +632,11 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
     }
     requestAnimationFrame(render);
     
+    if(!remoteLoad){
+        loadImageURLs();
+        remoteLoad = true;
+    }
+
     console.log("Running Demo");
 }
 
@@ -718,9 +730,10 @@ function DB_0(){
 
     state = 0;
 
-    vID += 1;
-    if(vID >= imageList.length - 1)
-        vID = 0;
+    // vID += 1;
+    // if(vID >= imageList.length - 1){
+    //     vID = 0;
+    // }
 
     if(!hasInit){
         LoadRenderer();
@@ -733,7 +746,11 @@ function DB_1(){
 
     state = 1;
 
-    
+    // DELETE
+    equiImage.onload = function() {
+        console.log("Equi Image Loaded");
+	};
+    equiImage.src = './Images/Page_1_Frame_1_Equi4K5_WEBP.webp';
 }
 
 function DB_2(){
