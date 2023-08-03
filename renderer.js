@@ -387,7 +387,8 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-    var currentVideo = setupVideo("https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/Video_F0001_1500.mp4");
+    var videoElement = document.createElement("video");
+    // var currentVideo = setupVideo("https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/Video_F0001_1500.mp4");
 
     // ------------ Resize ->
 
@@ -580,7 +581,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
                     gl.RGBA,            // internal format
                     gl.RGBA,            // format
                     gl.UNSIGNED_BYTE,   // type
-                    (enableVideo && copyVideo) ? currentVideo : imageList[vID][0]
+                    (enableVideo && copyVideo) ? videoElement : imageList[vID][0]
                 );
 
                 gl.uniform1i(downsample_Sampler1UniformLocation, 0);
@@ -643,20 +644,20 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 }
 
 function setupVideo(url) {
-    video = document.createElement("video");
+    //video = document.createElement("video");
   
     let playing = false;
     let timeupdate = false;
   
-    video.crossOrigin = "anonymous";
-    video.playsInline = true;
-    video.muted = true;
-    video.loop = true;
+    videoElement.crossOrigin = "anonymous";
+    videoElement.playsInline = true;
+    videoElement.muted = true;
+    videoElement.loop = true;
   
     // Waiting for these 2 events ensures
     // there is data in the video
   
-    video.addEventListener(
+    videoElement.addEventListener(
       "playing",
       () => {
         playing = true;
@@ -666,7 +667,7 @@ function setupVideo(url) {
       true
     );
   
-    video.addEventListener(
+    videoElement.addEventListener(
       "timeupdate",
       () => {
         timeupdate = true;
@@ -676,8 +677,8 @@ function setupVideo(url) {
       true
     );
   
-    video.src = url;
-    video.play();
+    videoElement.src = url;
+    videoElement.play();
   
     function checkReady() {
       if (playing && timeupdate) {
@@ -685,7 +686,7 @@ function setupVideo(url) {
       }
     }
   
-    return video;
+    return videoElement;
 }
 
 function getParaOffset(containerWidth, containerHeight, safeArea){
