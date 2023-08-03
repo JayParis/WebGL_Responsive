@@ -527,6 +527,7 @@ input[type=range]:focus::-moz-range-track {
     font-family: 'STIX Two Text', serif;
     font-size: 0.96rem;
     text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.4);
+    -webkit-user-select: none;
     user-select: none;
 }
 
@@ -602,6 +603,7 @@ input[type=range]:focus::-moz-range-track {
     padding-right: 45px;
     margin-top: auto;
     margin-bottom: auto;
+    -webkit-user-select: none;
     user-select: none;
 }
 
