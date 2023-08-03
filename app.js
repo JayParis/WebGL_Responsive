@@ -33,6 +33,7 @@ var lookX = 0;
 var lookY = 0;
 var lookSens = 0.01;
 
+console.log("Mobile: " + isMobile);
 if(isMobile){
     document.addEventListener("touchstart", e => { inputDown(e); });
     document.addEventListener("touchmove", e => { inputMove(e); });

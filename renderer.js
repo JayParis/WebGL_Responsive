@@ -7,7 +7,7 @@ var copyVideo = false;
 var equiRender = false;
 
 var remoteImagesLoadStep = 1; // 1 for all images, 2 for every other, 10 for quick debug
-var HQ = true;
+var HQ = false;
 
 var remoteLoad = false;
 var targetLoadProg = 0;
@@ -26,6 +26,8 @@ const _supabaseUrl = 'https://cfzcrwfmlxquedvdajiw.supabase.co';
 
 function LoadRenderer(){
     //loadImageURLs();
+    vID = 0;
+    tap_vID = 0;
     let path = HQ ? '/storage/v1/object/public/main-pages/Page_1_Main_' 
         : '/storage/v1/object/public/main-pages/750/Page_1_Main_';
     fetch(_supabaseUrl + path + "0001" + '.webp')
