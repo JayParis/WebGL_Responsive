@@ -426,6 +426,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             //const displayHeight = Math.round(height * dpr); //dpr
             const displayWidth = 750;
             const displayHeight = parseInt(750 * (height / width));
+            console.log(width);
 
             canvasToDisplaySizeMap.set(entry.target, [displayWidth, displayHeight]);
         }
@@ -439,6 +440,12 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         const needResize = canvas.width  !== displayWidth || canvas.height !== displayHeight || rebindBuffer;
 
         if (needResize) {
+            let CanvasBC = canvas.getBoundingClientRect();
+            canvasLeft = CanvasBC.left;
+            canvasWidth = CanvasBC.width;
+            console.log("C_Left: " + canvasLeft);
+            console.log("C_Width: " + canvasWidth);
+
             // Make the canvas the same size
             canvas.width  = displayWidth;
             canvas.height = displayHeight;
