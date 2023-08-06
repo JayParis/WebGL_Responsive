@@ -18,7 +18,10 @@ var state = 0;
 var previous_state = 1;
 
 var equiImage = new Image();
+var equiReady = false;
 
+var xRot = 0;
+var yRot = 0;
 
 const _supabaseUrl = 'https://cfzcrwfmlxquedvdajiw.supabase.co';
 
@@ -485,6 +488,8 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
             console.log("Rebinding buffer data");
             rebindBuffer = false;
+            if(state == 2)
+                equiReady = true;
         }
 
         return needResize;
@@ -510,27 +515,37 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
                     rebindBuffer = true;
                     break;
                 case 2:
-                    gl.activeTexture(gl.TEXTURE0);
-                    gl.bindTexture(gl.TEXTURE_2D, mainTexture);
-                    gl.texImage2D(
-                        gl.TEXTURE_2D, 
-                        0,
-                        gl.RGBA,
-                        gl.RGBA,
-                        gl.UNSIGNED_BYTE,
-                        equiImage
-                    );
-                    rebindBuffer = true;
+                    equiImage.onload = function() {
+                        gl.activeTexture(gl.TEXTURE0);
+                        gl.bindTexture(gl.TEXTURE_2D, mainTexture);
+                        gl.texImage2D(
+                            gl.TEXTURE_2D, 
+                            0,
+                            gl.RGBA,
+                            gl.RGBA,
+                            gl.UNSIGNED_BYTE,
+                            equiImage
+                        );
+                        rebindBuffer = true;
+                    };
+                    equiImage.src = './Images/Page_1_Frame_1_Equi4K5_WEBP.webp';
                     break;
             }
-            rebindBuffer = true;
+            if(state != 2){
+                equiReady = false;
+                xRot = 0;
+                yRot = 0;
+                lastLookX = lookX;
+                lastLookY = lookY;
+                rebindBuffer = true;
+            }
             enableVideo = state == 1;
             equiRender = state == 2;
             console.log("New State");
-        }        
+        }
 
         let resized = resizeCanvasToDisplaySize(gl.canvas);
-        let redraw = previous_vID != vID || resized || (enableVideo && copyVideo);
+        let redraw = previous_vID != vID || resized || (enableVideo && copyVideo) || (state == 2 && equiReady);
 
         if(redraw){
             console.log("REDRAW");
@@ -554,10 +569,15 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
                 gl.activeTexture(gl.TEXTURE0);
                 gl.bindTexture(gl.TEXTURE_2D, mainTexture);
 
-
+                xRot += lastLookX - lookX;
+                yRot += lastLookY - lookY;
                 mat4.identity(equi_worldMatrix);
-                mat4.lookAt(equi_viewMatrix, [0,0,-0.00001], [0.31,0,0], [0,1,0]);
-                mat4.perspective(equi_projMatrix, glMatrix.toRadian(45), fbTextureWidth / fbTextureHeight, 0.1, 1000.0);
+                mat4.lookAt(
+                    equi_viewMatrix,
+                    [0,0,-0.00001], 
+                    [xRot * lookSens * 0.01,yRot * lookSens * -0.01,0], 
+                    [0,1,0]);
+                mat4.perspective(equi_projMatrix, glMatrix.toRadian(35.6), fbTextureWidth / fbTextureHeight, 0.1, 1000.0);
 
                 gl.uniform1i(equi_Sampler1UniformLocation, 0);
                 gl.uniformMatrix4fv(equi_mWorldUniformLocation, gl.FALSE, equi_worldMatrix);
@@ -632,6 +652,11 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             
         }
 
+        if(equiLooking){
+            lastLookX = lookX;
+            lastLookY = lookY;
+        }
+
         previous_vID = vID;
         previous_state = state;
 
@@ -650,6 +675,13 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
     }
 
     console.log("Running Demo");
+}
+
+function setupEqui() {
+    equiImage.onload = function() {
+        equiReady = true;
+	};
+    equiImage.src = './Images/Page_1_Frame_1_Equi4K5_WEBP.webp';
 }
 
 function setupVideo(url) {
@@ -758,11 +790,6 @@ function DB_1(){
 
     state = 1;
 
-    // DELETE
-    equiImage.onload = function() {
-        console.log("Equi Image Loaded");
-	};
-    equiImage.src = './Images/Page_1_Frame_1_Equi4K5_WEBP.webp';
 }
 
 function DB_2(){
