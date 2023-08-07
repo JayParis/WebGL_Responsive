@@ -418,6 +418,13 @@ input[type=range]:focus::-moz-range-track {
     height: 130px;
 }
 
+#main-id{
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+    user-select: none;
+}
+
 .main-canvas{
     -webkit-user-select: none;
     -webkit-touch-callout: none;
