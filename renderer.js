@@ -548,7 +548,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         let redraw = previous_vID != vID || resized || (enableVideo && copyVideo) || (state == 2 && equiReady);
 
         if(redraw){
-            console.log("REDRAW");
+            //console.log("REDRAW");
             if(equiRender){
                 gl.viewport(0, 0, fbTextureWidth, fbTextureHeight);
                 gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
@@ -662,7 +662,20 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
         if(doubleTapDelay > 0){
             doubleTapDelay -= deltaTime * 3;
-            //console.log(doubleTapDelay);
+        }
+
+        if(inputting && tapHoldTime < 10 && tapHoldTime > -10){
+            tapHoldTime += deltaTime;
+            if(Math.abs(tapPos[0] - holdPos[0]) < 10 && Math.abs(tapPos[1] - holdPos[1]) < 10 && tapHoldTime > 0.30
+            && vID == tap_vID && !equiLooking){
+                state = 2;
+                equiLooking = true;
+                lookX = tapPos[0];
+                lookY = tapPos[1];
+                lastLookX = tapPos[0];
+                lastLookY = tapPos[1];
+                console.log("=========Setting Equi State");
+            }
         }
 
         // if (ext) { // Memory Info

@@ -39,6 +39,7 @@ var lastLookY = 0;
 var lookSens = 0.000001;
 var equiLooking = false;
 var doubleTapDelay = 0;
+var tapHoldTime = 0;
 
 
 //console.log("isTouch: " + isTouch);
@@ -83,13 +84,13 @@ function inputDown(event) {
             lookY = screenY;
             lastLookX = screenX;
             lastLookY = screenY;
+        }else{
+            tap_vID = vID;
         }
-
-        
     }
 
     tapPos = [screenX, screenY];
-
+    holdPos = [screenX, screenY];
 }
 
 function inputMove(event) {
@@ -102,11 +103,12 @@ function inputMove(event) {
 
     if(state == 0){
         if(inputType == 1){
+            tapHoldTime = -20;
             holdPos = [screenX, screenY];
     
             let moduloVal = 160 / remoteImagesLoadStep;
             vID = Math.abs(mod(tap_vID + Math.trunc((tapPos[0] * vSens) - (holdPos[0] * vSens)), moduloVal));
-            console.log("vID:" + vID);
+            //console.log("vID:" + vID);
         }
     } else if(state == 1){
 
@@ -141,6 +143,7 @@ function inputUp(event) {
     lastLookX = screenX;
     lastLookY = screenY;
     inputType = 0;
+    tapHoldTime = 0;
 }
 
 function LoadedPage() {
