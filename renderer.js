@@ -20,6 +20,7 @@ var previous_state = 1;
 var equiImage = new Image();
 var equiReady = false;
 
+var camFov = 35.6;
 var xRot = 0;
 var yRot = 0;
 
@@ -569,15 +570,20 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
                 gl.activeTexture(gl.TEXTURE0);
                 gl.bindTexture(gl.TEXTURE_2D, mainTexture);
 
-                xRot += lastLookX - lookX;
-                yRot += lastLookY - lookY;
+                let clampXY = FOVClamp(camFov);
+                xRot += (lastLookX - lookX) * 1.81;
+                // xRot = Clamp(xRot,-clampXY[0],clampXY[0]);
+                yRot += (lastLookY - lookY) * 1.81;
+                // yRot = Clamp(yRot,-clampXY[1],clampXY[1]);
+                console.log("X: " + xRot + " Y: " + yRot);
+
                 mat4.identity(equi_worldMatrix);
                 mat4.lookAt(
                     equi_viewMatrix,
                     [0,0,-0.00001], 
                     [xRot * lookSens * 0.01,yRot * lookSens * -0.01,0], 
                     [0,1,0]);
-                mat4.perspective(equi_projMatrix, glMatrix.toRadian(35.6), fbTextureWidth / fbTextureHeight, 0.1, 1000.0);
+                mat4.perspective(equi_projMatrix, glMatrix.toRadian(camFov), fbTextureWidth / fbTextureHeight, 0.1, 1000.0);
 
                 gl.uniform1i(equi_Sampler1UniformLocation, 0);
                 gl.uniformMatrix4fv(equi_mWorldUniformLocation, gl.FALSE, equi_worldMatrix);
@@ -667,7 +673,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         if(inputting && tapHoldTime < 10 && tapHoldTime > -10){
             tapHoldTime += deltaTime;
             if(Math.abs(tapPos[0] - holdPos[0]) < 10 && Math.abs(tapPos[1] - holdPos[1]) < 10 && tapHoldTime > 0.30
-            && vID == tap_vID && !equiLooking){
+            && vID == tap_vID && !equiLooking && firstTapInCanvas){
                 state = 2;
                 equiLooking = true;
                 lookX = tapPos[0];
@@ -783,6 +789,31 @@ function fitImageToUV(containerWidth, containerHeight, safeArea, desktop){
     
         return [uvTop, uvBottom, pTop, pBottom];
     }
+}
+
+function Clamp(num, min, max) {
+    return Math.min(Math.max(num, min), max);
+};
+
+function FOVClamp(fov){
+    let clampX = 7050; //3600
+    let clampY = 700; //475
+
+    let fov_t = (fov - 20) / 70;
+
+    let midX = 700; // 3000
+    let midY = 246; // 246
+
+    let X01 = lerp(6900, midX,fov_t);
+    let X02 = lerp(midX, 1210,fov_t);
+    clampX = lerp(X01, X02, fov_t);
+
+    let Y01 = lerp(700, midY,fov_t);
+    let Y02 = lerp(midY, 2,fov_t);
+    clampY = lerp(Y01,Y02,fov_t);
+
+    //return [clampX,clampY]; // [3600,475] 
+    return [3600,475]; // [3600,475] 
 }
 
 // --------------- DEBUG

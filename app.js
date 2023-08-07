@@ -40,6 +40,7 @@ var lookSens = 0.000001;
 var equiLooking = false;
 var doubleTapDelay = 0;
 var tapHoldTime = 0;
+var firstTapInCanvas = false;
 
 
 //console.log("isTouch: " + isTouch);
@@ -88,6 +89,8 @@ function inputDown(event) {
             tap_vID = vID;
         }
     }
+
+    firstTapInCanvas = inCanvas;
 
     tapPos = [screenX, screenY];
     holdPos = [screenX, screenY];
@@ -144,6 +147,7 @@ function inputUp(event) {
     lastLookY = screenY;
     inputType = 0;
     tapHoldTime = 0;
+    firstTapInCanvas = false;
 }
 
 function LoadedPage() {
