@@ -54,6 +54,8 @@ document.addEventListener("mouseup", e => { inputUp(e); });
 
 
 function inputDown(event) {
+    event.preventDefault();
+
     inputting = true;
 
     let screenX = event.changedTouches ? event.changedTouches[0].clientX : event.x;
@@ -64,7 +66,6 @@ function inputDown(event) {
 
     if(inCanvas){
         inputType = event.changedTouches ? 1 : event.which;
-        event.preventDefault();
 
         if(hasInit && doubleTapDelay > 0){
             if(Math.abs(tapPos[0] - screenX) < 20 && Math.abs(tapPos[1] - screenY) < 20) {
@@ -93,6 +94,7 @@ function inputDown(event) {
 }
 
 function inputMove(event) {
+    event.preventDefault();
     if(!inputting)
         return;
 
@@ -115,18 +117,17 @@ function inputMove(event) {
         lookY = screenY;
     }
 
-    event.preventDefault();
 
 }
 
 function inputUp(event) {
+    event.preventDefault();
     inputting = false;
 
     let screenX = event.changedTouches ? event.changedTouches[0].clientX : event.x;
     let screenY = event.changedTouches ? event.changedTouches[0].clientY : event.y;
 
     if(inputType != 0){
-        event.preventDefault();
     }
 
     if(inputType == 1){
