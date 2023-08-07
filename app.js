@@ -38,6 +38,7 @@ var lastLookX = 0;
 var lastLookY = 0;
 var lookSens = 0.000001;
 var equiLooking = false;
+var doubleTapDelay = 0;
 
 
 //console.log("isTouch: " + isTouch);
@@ -55,18 +56,24 @@ document.addEventListener("mouseup", e => { inputUp(e); });
 function inputDown(event) {
     inputting = true;
 
-    console.log(typeof event.changedTouches == undefined);
-
     let screenX = event.changedTouches ? event.changedTouches[0].clientX : event.x;
     let screenY = event.changedTouches ? event.changedTouches[0].clientY : event.y;
     let inCanvas = screenX > canvasLeft && screenX < (canvasLeft + canvasWidth);
     
+    let equi = event.changedTouches ? false : event.which == 3;
+
     if(inCanvas){
         inputType = event.changedTouches ? 1 : event.which;
         event.preventDefault();
-    }
 
-    let equi = event.changedTouches ? false : event.which == 3;
+        if(hasInit && doubleTapDelay > 0){
+            if(Math.abs(tapPos[0] - screenX) < 20 && Math.abs(tapPos[1] - screenY) < 20) {
+                console.log("Double Tapped");
+                equi = true;
+            }
+        }
+        doubleTapDelay = 1.0;
+    }
 
     if(inCanvas){
         state = equi ? 2 : 0;
@@ -77,9 +84,12 @@ function inputDown(event) {
             lastLookX = screenX;
             lastLookY = screenY;
         }
-        else
-            tapPos = [screenX, screenY];
+
+        
     }
+
+    tapPos = [screenX, screenY];
+
 }
 
 function inputMove(event) {
@@ -123,7 +133,13 @@ function inputUp(event) {
         tap_vID = vID;
     }
 
+    if(equiLooking)
+        state = 0;
     equiLooking = false;
+    lookX = screenX;
+    lookY = screenY;
+    lastLookX = screenX;
+    lastLookY = screenY;
     inputType = 0;
 }
 

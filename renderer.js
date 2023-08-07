@@ -660,6 +660,11 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         previous_vID = vID;
         previous_state = state;
 
+        if(doubleTapDelay > 0){
+            doubleTapDelay -= deltaTime * 3;
+            //console.log(doubleTapDelay);
+        }
+
         // if (ext) { // Memory Info
         //     const info = ext.getMemoryInfo();
         //     document.querySelector('#info').textContent = JSON.stringify(info, null, 2);
@@ -801,4 +806,8 @@ function DB_2(){
 function DB_3(){
     HQ = true;
     DB_0();
+}
+
+function DB_4(){
+    vID = imageList.length - 1;
 }
