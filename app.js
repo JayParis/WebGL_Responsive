@@ -41,6 +41,7 @@ var equiLooking = false;
 var doubleTapDelay = 0;
 var tapHoldTime = 0;
 var firstTapInCanvas = false;
+var firstCanvasInteraciton = false;
 
 
 //console.log("isTouch: " + isTouch);
@@ -75,16 +76,18 @@ function inputDown(event) {
             }
         }
         doubleTapDelay = 1.0;
+        firstCanvasInteraciton = true;
     }
 
     if(inCanvas){
-        state = equi ? 2 : 0;
+        //state = equi ? 2 : 0;
         if(equi){
             equiLooking = true;
             lookX = screenX;
             lookY = screenY;
             lastLookX = screenX;
             lastLookY = screenY;
+            state = 2;
         }else{
             tap_vID = vID;
         }
@@ -103,6 +106,8 @@ function inputMove(event) {
     let screenX = event.changedTouches ? event.changedTouches[0].clientX : event.x;
     let screenY = event.changedTouches ? event.changedTouches[0].clientY : event.y;
     
+    if(state == 1)
+        state = 0;
 
     if(state == 0){
         if(inputType == 1){
@@ -115,7 +120,7 @@ function inputMove(event) {
         }
     } else if(state == 1){
 
-    } else if(state == 2){
+    } else if(state == 2 && equiReady){
         lookX = screenX;
         lookY = screenY;
     }

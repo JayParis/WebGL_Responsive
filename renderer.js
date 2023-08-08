@@ -1,9 +1,10 @@
 var hasInit = false;
 
 var rebindBuffer = false;
-var video = undefined;
+var videoElement = undefined;
 var enableVideo = false;
 var copyVideo = false;
+var setFrameVideo = false;
 var equiRender = false;
 
 var remoteImagesLoadStep = 1; // 1 for all images, 2 for every other, 10 for quick debug
@@ -16,6 +17,9 @@ var vID = 0;
 var previous_vID = 1;
 var state = 0;
 var previous_state = 1;
+var idleTime = 0;
+
+var initVideo = false;
 
 var equiImage = new Image();
 var equiReady = false;
@@ -399,7 +403,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
     gl.useProgram(prg_main);
 
-    var videoElement = document.createElement("video");
+    videoElement = document.createElement("video");
     // var currentVideo = setupVideo("https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/Video_F0001_1500.mp4");
 
     // ------------ Resize ->
@@ -453,8 +457,6 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             let CanvasBC = canvas.getBoundingClientRect();
             canvasLeft = CanvasBC.left;
             canvasWidth = CanvasBC.width;
-            console.log("C_Left: " + canvasLeft);
-            console.log("C_Width: " + canvasWidth);
 
             // Make the canvas the same size
             canvas.width  = displayWidth;
@@ -471,8 +473,6 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             // let paraOffset = getParaOffset(displayWidth, displayHeight, sa_t) * 0.9;
             // pageBlock.style.top = (100 * paraOffset).toString() + "vh";
             // pageBlock.style.height = ((1 - paraOffset) * 100).toString() + "vh";
-
-            console.log("VertBuffer Updating");
 
             console.log("Safe Area Top: " + sa_t);
             console.log("Width: " + displayWidth);
@@ -535,7 +535,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
                         );
                         rebindBuffer = true;
                     };
-                    equiImage.src = './Images/Page_1_Frame_1_Equi4K5_WEBP.webp';
+                    equiImage.src = './Images/Page_1_Frame_1_Equi4K6_WEBP.webp';
                     break;
             }
             if(state != 2){
@@ -549,9 +549,13 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
                 camFov = initial_camFov;
                 fovGrowSpeed = 0;
                 equiTime = 0;
-                rebindBuffer = true;
+                rebindBuffer = state == 0; // true
             }
+            idleTime = 0;
+            setFrameVideo = false;
+            console.log("state: " + state);
             enableVideo = state == 1;
+            copyVideo = false;
             equiRender = state == 2;
             console.log("New State");
         }
@@ -671,8 +675,12 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             gl.uniformMatrix4fv(main_mProjUniformLocation, gl.FALSE, plane_projMatrix);
 
             gl.drawArrays(gl.TRIANGLES, 0, 6); //6
-            
         }
+        //console.log(state);
+        //console.log(enableVideo);
+        
+
+        
 
         if(equiLooking){
             lastLookX = lookX;
@@ -685,6 +693,18 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
         previous_vID = vID;
         previous_state = state;
+
+        if(state == 0 && redraw){
+            idleTime = 0;
+            setFrameVideo = false;
+        }
+        if(state == 0 && idleTime < 5 && firstCanvasInteraciton && !inputting)
+            idleTime += deltaTime;
+        if(state == 0 && idleTime > 1 && !setFrameVideo && !inputting){
+            state = 1;
+            setVideo(vID);
+            setFrameVideo = true;
+        }
 
         if(doubleTapDelay > 0){
             doubleTapDelay -= deltaTime * 3;
@@ -746,7 +766,7 @@ function setupVideo(url) {
       "playing",
       () => {
         playing = true;
-        //console.log("Video wants to play");
+        console.log("Video wants to play");
         checkReady();
       },
       true
@@ -767,11 +787,30 @@ function setupVideo(url) {
   
     function checkReady() {
       if (playing && timeupdate) {
+        if(!copyVideo && state == 1){
+            rebindBuffer = true;
+            console.log("REBIND VIDEO BUFFER");
+        }
         copyVideo = true;
       }
     }
   
     return videoElement;
+}
+
+function setVideo(videoID){
+    let vidURL = 'https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/Video_F0001_1500.mp4';
+
+    if(!initVideo){
+        setupVideo(vidURL);
+        initVideo = true;
+    }else{
+        videoElement.src = vidURL;
+        videoElement.play();
+    }
+    //enableVideo = true;
+    state = 1;
+    console.log("Setting Video...");
 }
 
 function getParaOffset(containerWidth, containerHeight, safeArea){
@@ -827,6 +866,7 @@ function FOVClamp(fov){
 
     return [clampX,clampY]; // [3600,475] 
 }
+
 
 // --------------- DEBUG
 
