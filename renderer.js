@@ -19,8 +19,14 @@ var previous_state = 1;
 
 var equiImage = new Image();
 var equiReady = false;
+var equiTime = 0;
 
-var camFov = 35.6;
+var camFov = 35.6; // 35.6
+var target_camFov = 51.6; // 35.6
+var initial_camFov = 35.6; // 35.6
+var fovGrowSpeed = 0;
+var target_xRot = 0;
+var target_yRot = 0;
 var xRot = 0;
 var yRot = 0;
 
@@ -534,10 +540,15 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             }
             if(state != 2){
                 equiReady = false;
+                target_xRot = 0;
                 xRot = 0;
+                target_yRot = 0;
                 yRot = 0;
                 lastLookX = lookX;
                 lastLookY = lookY;
+                camFov = initial_camFov;
+                fovGrowSpeed = 0;
+                equiTime = 0;
                 rebindBuffer = true;
             }
             enableVideo = state == 1;
@@ -570,12 +581,17 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
                 gl.activeTexture(gl.TEXTURE0);
                 gl.bindTexture(gl.TEXTURE_2D, mainTexture);
 
+                camFov = lerp(camFov, target_camFov, deltaTime * 2 * fovGrowSpeed);
+
                 let clampXY = FOVClamp(camFov);
-                xRot += (lastLookX - lookX) * 1.81;
-                // xRot = Clamp(xRot,-clampXY[0],clampXY[0]);
-                yRot += (lastLookY - lookY) * 1.81;
-                // yRot = Clamp(yRot,-clampXY[1],clampXY[1]);
-                console.log("X: " + xRot + " Y: " + yRot);
+                target_xRot += (lastLookX - lookX) * 1.81;
+                target_xRot = Clamp(target_xRot,-clampXY[0],clampXY[0]);
+                target_yRot += (lastLookY - lookY) * 1.81;
+                target_yRot = Clamp(target_yRot,-clampXY[1],clampXY[1]);
+                // console.log("X: " + target_xRot + " Y: " + target_yRot);
+
+                xRot = lerp(xRot,target_xRot,deltaTime * 16);
+                yRot = lerp(yRot,target_yRot,deltaTime * 16);
 
                 mat4.identity(equi_worldMatrix);
                 mat4.lookAt(
@@ -661,6 +677,10 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         if(equiLooking){
             lastLookX = lookX;
             lastLookY = lookY;
+            if(fovGrowSpeed < 2 && equiReady && equiTime > 0.15)
+                fovGrowSpeed += deltaTime * 5;
+            if(equiTime < 5 && equiReady)
+                equiTime += deltaTime;
         }
 
         previous_vID = vID;
@@ -800,20 +820,12 @@ function FOVClamp(fov){
     let clampY = 700; //475
 
     let fov_t = (fov - 20) / 70;
+    let mod = 8 * (1.0 - fov_t) * 0.5;
+    clampX = (fov * mod) ** 1.45 + 1050;
 
-    let midX = 700; // 3000
-    let midY = 246; // 246
+    clampY = lerp(600,0, fov_t);
 
-    let X01 = lerp(6900, midX,fov_t);
-    let X02 = lerp(midX, 1210,fov_t);
-    clampX = lerp(X01, X02, fov_t);
-
-    let Y01 = lerp(700, midY,fov_t);
-    let Y02 = lerp(midY, 2,fov_t);
-    clampY = lerp(Y01,Y02,fov_t);
-
-    //return [clampX,clampY]; // [3600,475] 
-    return [3600,475]; // [3600,475] 
+    return [clampX,clampY]; // [3600,475] 
 }
 
 // --------------- DEBUG
