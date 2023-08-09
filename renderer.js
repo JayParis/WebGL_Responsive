@@ -65,7 +65,7 @@ function RemoteImage(path, index, firstImage){
                     let lp = imageList.length / (160 / remoteImagesLoadStep);
                     targetLoadProg = lp;
 
-                    let strokeDashOffset = lerp(1116,493,lp);
+                    let strokeDashOffset = Lerp(1116,493,lp);
                     root.style.setProperty('--loading-prog', strokeDashOffset + 'px');
 
                     if(lp >= 1)
@@ -469,30 +469,6 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         
         let newState = previous_state != state;
         if(newState){
-            switch (state) {
-                case 0:
-                    // rebindBuffer = true;
-                    break;
-                case 1:
-                    // rebindBuffer = true;
-                    break;
-                case 2:
-                    equiImage.onload = function() {
-                        gl.activeTexture(gl.TEXTURE0);
-                        gl.bindTexture(gl.TEXTURE_2D, mainTexture);
-                        gl.texImage2D(
-                            gl.TEXTURE_2D, 
-                            0,
-                            gl.RGBA,
-                            gl.RGBA,
-                            gl.UNSIGNED_BYTE,
-                            equiImage
-                        );
-                        rebindBuffer = true;
-                    };
-                    equiImage.src = './Images/Page_1_Frame_1_Equi4K6_WEBP.webp';
-                    break;
-            }
             if(state != 2){
                 equiReady = false;
                 target_xRot = 0;
@@ -506,6 +482,21 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
                 fovGrowSpeed = 0;
                 equiTime = 0;
                 rebindBuffer = state == 0; // true
+            } else {
+                equiImage.onload = function() {
+                    gl.activeTexture(gl.TEXTURE0);
+                    gl.bindTexture(gl.TEXTURE_2D, mainTexture);
+                    gl.texImage2D(
+                        gl.TEXTURE_2D, 
+                        0,
+                        gl.RGBA,
+                        gl.RGBA,
+                        gl.UNSIGNED_BYTE,
+                        equiImage
+                    );
+                    rebindBuffer = true;
+                };
+                equiImage.src = './Images/Page_1_Frame_1_Equi4K6_WEBP.webp';
             }
             idleTime = 0;
             setFrameVideo = false;
@@ -540,7 +531,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
                 gl.activeTexture(gl.TEXTURE0);
                 gl.bindTexture(gl.TEXTURE_2D, mainTexture);
 
-                camFov = lerp(camFov, target_camFov, deltaTime * 2 * fovGrowSpeed);
+                camFov = Lerp(camFov, target_camFov, deltaTime * 2 * fovGrowSpeed);
 
                 let clampXY = FOVClamp(camFov);
                 target_xRot += (lastLookX - lookX) * 1.81;
@@ -548,8 +539,8 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
                 target_yRot += (lastLookY - lookY) * 1.81;
                 target_yRot = Clamp(target_yRot,-clampXY[1],clampXY[1]);
 
-                xRot = lerp(xRot,target_xRot,deltaTime * 16);
-                yRot = lerp(yRot,target_yRot,deltaTime * 16);
+                xRot = Lerp(xRot,target_xRot,deltaTime * 16);
+                yRot = Lerp(yRot,target_yRot,deltaTime * 16);
 
                 mat4.identity(equi_worldMatrix);
                 mat4.lookAt(
@@ -630,23 +621,26 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
             gl.drawArrays(gl.TRIANGLES, 0, 6); //6
         }
+        
 
-        if(equiLooking){
+        if(vID != previous_vID){
+            scrubLeft = vID >= previous_vID;
+        }
+
+        previous_vID = vID;
+        previous_state = state;
+
+        if(state == 2){
             lastLookX = lookX;
             lastLookY = lookY;
             
             if(equiTime < 5 && equiReady)
                 equiTime += deltaTime;
-        }
-        if((equiLooking || equiReleased) && fovGrowSpeed < (equiReleased ? 5 : 2) && equiReady && equiTime > 0.15)
+            if(fovGrowSpeed < (equiReleased ? 5 : 2) && equiReady && equiTime > 0.15)
                 fovGrowSpeed += deltaTime * (equiReleased ? 10 : 5);
-
-        if(vID != previous_vID){
-            scrubLeft = vID > previous_vID;
+            if(equiReleased && camFov < target_camFov + 0.5)
+                state = 0;
         }
-
-        previous_vID = vID;
-        previous_state = state;
 
         if(state == 0){
             if(redraw){
@@ -669,9 +663,8 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         if(inputting && tapHoldTime < 10 && tapHoldTime > -10){
             tapHoldTime += deltaTime;
             if(Math.abs(tapPos[0] - holdPos[0]) < 10 && Math.abs(tapPos[1] - holdPos[1]) < 10 && tapHoldTime > 0.30
-            && vID == tap_vID && !equiLooking && firstTapInCanvas){
+            && vID == tap_vID && state != 2 && firstTapInCanvas){
                 state = 2;
-                equiLooking = true;
                 lookX = tapPos[0];
                 lookY = tapPos[1];
                 lastLookX = tapPos[0];
@@ -679,9 +672,6 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
                 equiReleased = false;
             }
         }
-
-        if(state == 2 && equiReleased && camFov < target_camFov + 0.5)
-            state = 0; // 0
 
         // if (ext) { // Memory Info
         //     const info = ext.getMemoryInfo();
@@ -698,13 +688,6 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
     }
 
     console.log("Renderer Setup Finished");
-}
-
-function setupEqui() {
-    equiImage.onload = function() {
-        equiReady = true;
-	};
-    equiImage.src = './Images/Page_1_Frame_1_Equi4K5_WEBP.webp';
 }
 
 function setupVideo(url) {
@@ -808,10 +791,6 @@ function fitImageToUV(containerWidth, containerHeight, safeArea, desktop){
     }
 }
 
-function Clamp(num, min, max) {
-    return Math.min(Math.max(num, min), max);
-};
-
 function FOVClamp(fov){
     let clampX = 7050; //3600
     let clampY = 700; //475
@@ -820,7 +799,7 @@ function FOVClamp(fov){
     let mod = 8 * (1.0 - fov_t) * 0.5;
     clampX = (fov * mod) ** 1.45 + 1050;
 
-    clampY = lerp(600,0, fov_t);
+    clampY = Lerp(600,0, fov_t);
 
     return [clampX,clampY]; // [3600,475] 
 }
@@ -829,14 +808,7 @@ function FOVClamp(fov){
 // --------------- DEBUG
 
 function DB_0(){
-
     state = 0;
-
-    // vID += 1;
-    // if(vID >= imageList.length - 1){
-    //     vID = 0;
-    // }
-
     if(!hasInit){
         LoadRenderer();
         console.log("Init Renderer Button");
@@ -844,17 +816,15 @@ function DB_0(){
 }
 
 function DB_1(){
-
     state = 1;
-
 }
 
 function DB_2(){
-
     state = 2;
 }
 
 function DB_3(){
+    state = 0;
     HQ = true;
     DB_0();
 }
