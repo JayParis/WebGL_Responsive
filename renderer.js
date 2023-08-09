@@ -44,35 +44,25 @@ function LoadRenderer(){
     tap_vID = 0;
     let path = HQ ? '/storage/v1/object/public/main-pages/Page_1_Main_' 
         : '/storage/v1/object/public/main-pages/750/Page_1_Main_';
-    fetch(_supabaseUrl + path + "0001" + '.webp')
-        .then(res => res.blob())
-        .then(blob => {
-            const file = new File([blob], "0001", {type: blob.type});
-            createImageBitmap(file).then(img => {
-                imageList.push([img, 1]);
-                LoadShadersAndInitRenderer();
-            })
-        });
-    
+    RemoteImage(path,1,true);
 }
 
-function loadImageURLs(){
-    let path = HQ ? '/storage/v1/object/public/main-pages/Page_1_Main_' 
-        : '/storage/v1/object/public/main-pages/750/Page_1_Main_';
-    
-    for (let i = 1; i <= 160; i += remoteImagesLoadStep) { //160
-        if(i == 1) continue;
-
-        let end = i.toString().padStart(4,'0');
-        fetch(_supabaseUrl + path + end + '.webp')
+function RemoteImage(path, index, firstImage){
+    let end = index.toString().padStart(4,'0');
+    fetch(_supabaseUrl + path + end + '.webp')
             .then(res => res.blob())
             .then(blob => {
-                const file = new File([blob], i.toString(), {type: blob.type});
+                const file = new File([blob], index.toString(), {type: blob.type});
                 createImageBitmap(file).then(img => {
-                    imageList.push([img, i]);
+                    imageList.push([img, index]);
                     
+                    if(firstImage){
+                        console.log("LoadShadersAndInit");
+                        LoadShadersAndInitRenderer();
+                        return;
+                    }
+
                     let lp = imageList.length / (160 / remoteImagesLoadStep);
-                    console.log(lp);
                     targetLoadProg = lp;
 
                     let strokeDashOffset = lerp(1116,493,lp);
@@ -82,6 +72,15 @@ function loadImageURLs(){
                         SortImages();
                 })
             });
+}
+
+function loadImageURLs(){
+    let path = HQ ? '/storage/v1/object/public/main-pages/Page_1_Main_' 
+        : '/storage/v1/object/public/main-pages/750/Page_1_Main_';
+    
+    for (let i = 1; i <= 160; i += remoteImagesLoadStep) { //160
+        if(i == 1) continue;
+        RemoteImage(path,i,false);
     }
 }
 
@@ -104,14 +103,12 @@ function SortImages(){
             return -1;
         return 0;
     });
-    console.log(imageList[0]);
     setTimeout(HideLoader, 500);
     //LoadShadersAndInitRenderer();
 }
 
 function HideLoader(){
     document.getElementById("lc-id").style.display = "none";
-    console.log("Hidden");
 }
 
 async function LoadShadersAndInitRenderer(){
@@ -136,33 +133,21 @@ async function LoadShadersAndInitRenderer(){
 }
 
 function parseOBJ(text) {
-    // because indices are base 1 let's just fill in the 0th data
     const objPositions = [[0, 0, 0]];
     const objTexcoords = [[0, 0]];
     const objNormals = [[0, 0, 0]];
-  
-    // same order as `f` indices
+
     const objVertexData = [
       objPositions,
       objTexcoords,
       objNormals,
     ];
   
-    // same order as `f` indices
     let webglVertexData = [
       [],   // positions
       [],   // texcoords
       [],   // normals
     ];
-  
-    function newGeometry() {
-      // If there is an existing geometry and it's
-      // not empty then start a new one.
-      if (geometry && geometry.data.position.length) {
-        geometry = undefined;
-      }
-      setGeometry();
-    }
   
     function addVertex(vert) {
       const ptn = vert.split('/');
@@ -184,7 +169,6 @@ function parseOBJ(text) {
         objNormals.push(parts.map(parseFloat));
       },
       vt(parts) {
-        // should check for missing v and extra w?
         objTexcoords.push(parts.map(parseFloat));
       },
       f(parts) {
@@ -196,25 +180,18 @@ function parseOBJ(text) {
         }
       },
     };
-  
+    
     const keywordRE = /(\w*)(?: )*(.*)/;
     const lines = text.split('\n');
     for (let lineNo = 0; lineNo < lines.length; ++lineNo) {
       const line = lines[lineNo].trim();
-      if (line === '' || line.startsWith('#')) {
-        continue;
-      }
+      if (line === '' || line.startsWith('#')) { continue; }
       const m = keywordRE.exec(line);
-      if (!m) {
-        continue;
-      }
+      if (!m) { continue; }
       const [, keyword, unparsedArgs] = m;
       const parts = line.split(/\s+/).slice(1);
       const handler = keywords[keyword];
-      if (!handler) {
-        //console.warn('unhandled keyword:', keyword);  // eslint-disable-line no-console
-        continue;
-      }
+      if (!handler) { continue; }
       handler(parts, unparsedArgs);
     }
   
@@ -243,7 +220,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         if (success) {
           return shader;
         }
-        console.log(gl.getShaderInfoLog(shader));
+        //console.log(gl.getShaderInfoLog(shader));
         gl.deleteShader(shader);
     }
 
@@ -256,7 +233,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         if (success) {
           return program;
         }
-        console.log(gl.getProgramInfoLog(program));
+        //console.log(gl.getProgramInfoLog(program));
         gl.deleteProgram(program);
     }
 
@@ -295,7 +272,6 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
     var equi_Sampler1UniformLocation = gl.getUniformLocation(prg_equi, "sampler_1");
 
     const meshData = parseOBJ(equiObjText);
-    console.log(meshData);
 
     var planePositionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, planePositionBuffer);
@@ -362,18 +338,6 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
-
-    
-
-    /*
-    var planeIndices =
-	[
-		// Front
-		1, 0, 2,
-		3, 2, 0,
-	];
-    */
-
     // ------------ Frame Buffer Setup ->
 
     const fbTextureWidth = 750;
@@ -416,9 +380,6 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             let height;
             let dpr = window.devicePixelRatio;
             if (entry.devicePixelContentBoxSize) {
-                // NOTE: Only this path gives the correct answer
-                // The other 2 paths are an imperfect fallback
-                // for browsers that don't provide anyway to do this
                 width = entry.devicePixelContentBoxSize[0].inlineSize;
                 height = entry.devicePixelContentBoxSize[0].blockSize;
                 dpr = 1; // it's already in width and height
@@ -440,7 +401,6 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             //const displayHeight = Math.round(height * dpr); //dpr
             const displayWidth = 750;
             const displayHeight = parseInt(750 * (height / width));
-            console.log(width);
 
             canvasToDisplaySizeMap.set(entry.target, [displayWidth, displayHeight]);
         }
@@ -458,7 +418,6 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             canvasLeft = CanvasBC.left;
             canvasWidth = CanvasBC.width;
 
-            // Make the canvas the same size
             canvas.width  = displayWidth;
             canvas.height = displayHeight;
 
@@ -473,10 +432,6 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             // let paraOffset = getParaOffset(displayWidth, displayHeight, sa_t) * 0.9;
             // pageBlock.style.top = (100 * paraOffset).toString() + "vh";
             // pageBlock.style.height = ((1 - paraOffset) * 100).toString() + "vh";
-
-            console.log("Safe Area Top: " + sa_t);
-            console.log("Width: " + displayWidth);
-            console.log("Height: " + displayHeight);
 
             //let enableVideo = false;
             var newPlaneTexCoords = 
@@ -516,10 +471,10 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         if(newState){
             switch (state) {
                 case 0:
-                    rebindBuffer = true;
+                    // rebindBuffer = true;
                     break;
                 case 1:
-                    rebindBuffer = true;
+                    // rebindBuffer = true;
                     break;
                 case 2:
                     equiImage.onload = function() {
@@ -546,6 +501,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
                 yRot = 0;
                 lastLookX = lookX;
                 lastLookY = lookY;
+                target_camFov = 51.6;
                 camFov = initial_camFov;
                 fovGrowSpeed = 0;
                 equiTime = 0;
@@ -553,11 +509,10 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             }
             idleTime = 0;
             setFrameVideo = false;
-            console.log("state: " + state);
             enableVideo = state == 1;
             copyVideo = false;
             equiRender = state == 2;
-            console.log("New State");
+            console.log("New state: " + state);
         }
 
         let resized = resizeCanvasToDisplaySize(gl.canvas);
@@ -592,7 +547,6 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
                 target_xRot = Clamp(target_xRot,-clampXY[0],clampXY[0]);
                 target_yRot += (lastLookY - lookY) * 1.81;
                 target_yRot = Clamp(target_yRot,-clampXY[1],clampXY[1]);
-                // console.log("X: " + target_xRot + " Y: " + target_yRot);
 
                 xRot = lerp(xRot,target_xRot,deltaTime * 16);
                 yRot = lerp(yRot,target_yRot,deltaTime * 16);
@@ -676,34 +630,36 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
             gl.drawArrays(gl.TRIANGLES, 0, 6); //6
         }
-        //console.log(state);
-        //console.log(enableVideo);
-        
-
-        
 
         if(equiLooking){
             lastLookX = lookX;
             lastLookY = lookY;
-            if(fovGrowSpeed < 2 && equiReady && equiTime > 0.15)
-                fovGrowSpeed += deltaTime * 5;
+            
             if(equiTime < 5 && equiReady)
                 equiTime += deltaTime;
+        }
+        if((equiLooking || equiReleased) && fovGrowSpeed < (equiReleased ? 5 : 2) && equiReady && equiTime > 0.15)
+                fovGrowSpeed += deltaTime * (equiReleased ? 10 : 5);
+
+        if(vID != previous_vID){
+            scrubLeft = vID > previous_vID;
         }
 
         previous_vID = vID;
         previous_state = state;
 
-        if(state == 0 && redraw){
-            idleTime = 0;
-            setFrameVideo = false;
-        }
-        if(state == 0 && idleTime < 5 && firstCanvasInteraciton && !inputting)
-            idleTime += deltaTime;
-        if(state == 0 && idleTime > 1 && !setFrameVideo && !inputting){
-            state = 1;
-            setVideo(vID);
-            setFrameVideo = true;
+        if(state == 0){
+            if(redraw){
+                idleTime = 0;
+                setFrameVideo = false;
+            }
+            if(idleTime < 5 && firstCanvasInteraciton && !inputting)
+                idleTime += deltaTime;
+            if(idleTime > 1 && !setFrameVideo && !inputting){
+                state = 1;
+                setVideo(vID);
+                setFrameVideo = true;
+            }
         }
 
         if(doubleTapDelay > 0){
@@ -720,9 +676,12 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
                 lookY = tapPos[1];
                 lastLookX = tapPos[0];
                 lastLookY = tapPos[1];
-                console.log("=========Setting Equi State");
+                equiReleased = false;
             }
         }
+
+        if(state == 2 && equiReleased && camFov < target_camFov + 0.5)
+            state = 0; // 0
 
         // if (ext) { // Memory Info
         //     const info = ext.getMemoryInfo();
@@ -738,7 +697,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         remoteLoad = true;
     }
 
-    console.log("Running Demo");
+    console.log("Renderer Setup Finished");
 }
 
 function setupEqui() {
@@ -766,7 +725,7 @@ function setupVideo(url) {
       "playing",
       () => {
         playing = true;
-        console.log("Video wants to play");
+        //console.log("Video wants to play");
         checkReady();
       },
       true
@@ -789,7 +748,6 @@ function setupVideo(url) {
       if (playing && timeupdate) {
         if(!copyVideo && state == 1){
             rebindBuffer = true;
-            console.log("REBIND VIDEO BUFFER");
         }
         copyVideo = true;
       }
@@ -810,7 +768,7 @@ function setVideo(videoID){
     }
     //enableVideo = true;
     state = 1;
-    console.log("Setting Video...");
+    //console.log("Setting Video...");
 }
 
 function getParaOffset(containerWidth, containerHeight, safeArea){
@@ -871,7 +829,6 @@ function FOVClamp(fov){
 // --------------- DEBUG
 
 function DB_0(){
-    console.log("DB_1");
 
     state = 0;
 
@@ -887,14 +844,12 @@ function DB_0(){
 }
 
 function DB_1(){
-    console.log("DB_2");
 
     state = 1;
 
 }
 
 function DB_2(){
-    console.log("DB_3");
 
     state = 2;
 }

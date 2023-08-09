@@ -25,6 +25,7 @@ var tapPos = [0,0];
 var holdPos = [0,0];
 
 var inputType = 0;
+var scrubLeft = true;
 //Viewer
 var vSens = 0.215;
 var tap_vID = 0;
@@ -42,6 +43,7 @@ var doubleTapDelay = 0;
 var tapHoldTime = 0;
 var firstTapInCanvas = false;
 var firstCanvasInteraciton = false;
+var equiReleased = false;
 
 
 //console.log("isTouch: " + isTouch);
@@ -87,6 +89,8 @@ function inputDown(event) {
             lookY = screenY;
             lastLookX = screenX;
             lastLookY = screenY;
+            target_camFov = 51.6;
+            equiReleased = false;
             state = 2;
         }else{
             tap_vID = vID;
@@ -106,7 +110,7 @@ function inputMove(event) {
     let screenX = event.changedTouches ? event.changedTouches[0].clientX : event.x;
     let screenY = event.changedTouches ? event.changedTouches[0].clientY : event.y;
     
-    if(state == 1)
+    if(state == 1 || (state == 2 && equiReleased))
         state = 0;
 
     if(state == 0){
@@ -116,7 +120,7 @@ function inputMove(event) {
     
             let moduloVal = 160 / remoteImagesLoadStep;
             vID = Math.abs(mod(tap_vID + Math.trunc((tapPos[0] * vSens) - (holdPos[0] * vSens)), moduloVal));
-            //console.log("vID:" + vID);
+            console.log("vID:" + vID);
         }
     } else if(state == 1){
 
@@ -140,11 +144,26 @@ function inputUp(event) {
     }
 
     if(inputType == 1){
+        if(vID + 1 > imageList.length - 1)
+            vID--;
+        else if(vID - 1 < 0)
+            vID++;
+        
+        if(vID % 2 != 0){
+            vID += scrubLeft ? 1 : -1;
+        }
         tap_vID = vID;
+        console.log("Snapped vID: " + vID);
     }
 
-    if(equiLooking)
-        state = 0;
+    //if(equiLooking)
+    //    state = 0;
+    if(equiLooking){
+        target_xRot = 0;
+        target_yRot = 0;
+        target_camFov = initial_camFov;
+        equiReleased = true;
+    }
     equiLooking = false;
     lookX = screenX;
     lookY = screenY;
