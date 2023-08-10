@@ -820,7 +820,7 @@ function setupVideo(url) {
 
 function setVideo(videoID, isIntro){
 
-    let vidURL = isIntro ? 'https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/IntroVideo_P10001-0120.mp4' 
+    let vidURL = isIntro ? 'https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/IntroVideoV2_P10001-0120.mp4' 
     : 'https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/Video_F0001_1500.mp4';
 
     if(!initVideo){
