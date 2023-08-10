@@ -48,29 +48,38 @@ var target_fullBlurVal = 1.0;
 var blurModVal = 1.0;
 var finishedInitUniform = false;
 
+var introFirstFrame = undefined;
+
 function LoadRenderer(){
     //loadImageURLs();
     vID = 0;
     tap_vID = 0;
     let path = HQ ? '/storage/v1/object/public/main-pages/Page_1_Main_' 
         : '/storage/v1/object/public/main-pages/750/Page_1_Main_';
-    RemoteImage(path,1,true);
+
+    RemoteImage(path,0,true);
 }
 
 function RemoteImage(path, index, firstImage){
     let end = index.toString().padStart(4,'0');
-    fetch(_supabaseUrl + path + end + '.webp')
+    let finalPath = path;
+    if(firstImage){    
+        finalPath = '/storage/v1/object/public/main-pages';
+        end = '/Video/Page1Intro_0001';
+    }
+    fetch(_supabaseUrl + finalPath + end + '.webp')
             .then(res => res.blob())
             .then(blob => {
                 const file = new File([blob], index.toString(), {type: blob.type});
                 createImageBitmap(file).then(img => {
-                    imageList.push([img, index]);
                     
                     if(firstImage){
                         console.log("LoadShadersAndInit");
+                        introFirstFrame = img;
                         LoadShadersAndInitRenderer();
                         return;
                     }
+                    imageList.push([img, index]);
 
                     let lp = imageList.length / (160 / remoteImagesLoadStep);
                     targetLoadProg = lp;
@@ -89,7 +98,7 @@ function loadImageURLs(){
         : '/storage/v1/object/public/main-pages/750/Page_1_Main_';
     
     for (let i = 1; i <= 160; i += remoteImagesLoadStep) { //160
-        if(i == 1) continue;
+        //if(i == 1) continue;
         RemoteImage(path,i,false);
     }
 }
@@ -123,6 +132,14 @@ function HideLoader(){
     target_fadeTintVal = [0.091,0.051,0.061];
     target_mainTintVal = [1.0,1.0,1.0]
     target_fullBlurVal = 0.0;
+    PlayIntroVideo();
+}
+
+function PlayIntroVideo(){
+    state = 1;
+    setVideo(1, true);
+    equiImage.src = null;
+    setFrameVideo = true;
 }
 
 async function LoadShadersAndInitRenderer(){
@@ -347,7 +364,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         gl.RGBA,            // internal format
         gl.RGBA,            // format
         gl.UNSIGNED_BYTE,   // type
-        imageList[0][0]     // data
+        introFirstFrame     // data // imageList[0][0]
     );
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT); // MIRRORED_REPEAT
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
@@ -614,7 +631,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
                     gl.RGBA,            // internal format
                     gl.RGBA,            // format
                     gl.UNSIGNED_BYTE,   // type
-                    (enableVideo && copyVideo) ? videoElement : imageList[vID][0]
+                    (enableVideo && copyVideo) ? videoElement : (mainControl && firstCanvasInteraciton ? imageList[vID][0] : introFirstFrame)
                 );
 
                 gl.uniform1i(downsample_Sampler1UniformLocation, 0);
@@ -682,17 +699,17 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         }
 
         if(state == 0){
-            if(redraw){
-                idleTime = 0;
-                setFrameVideo = false;
-            }
             if(idleTime < 5 && firstCanvasInteraciton && !inputting)
                 idleTime += deltaTime;
             if(idleTime > 1 && !setFrameVideo && !inputting){
                 state = 1;
-                setVideo(vID);
+                setVideo(vID, false);
                 equiImage.src = null;
                 setFrameVideo = true;
+            }
+            if(redraw){
+                idleTime = 0;
+                setFrameVideo = false;
             }
         }
 
@@ -801,8 +818,10 @@ function setupVideo(url) {
     return videoElement;
 }
 
-function setVideo(videoID){
-    let vidURL = 'https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/Video_F0001_1500.mp4';
+function setVideo(videoID, isIntro){
+
+    let vidURL = isIntro ? 'https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/IntroVideo_P10001-0120.mp4' 
+    : 'https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/Video_F0001_1500.mp4';
 
     if(!initVideo){
         setupVideo(vidURL);
@@ -811,9 +830,10 @@ function setVideo(videoID){
         videoElement.src = vidURL;
         videoElement.play();
     }
+    videoElement.loop = !isIntro;
     //enableVideo = true;
     state = 1;
-    //console.log("Setting Video...");
+    console.log("Setting Video...");
 }
 
 function getParaOffset(containerWidth, containerHeight, safeArea){
