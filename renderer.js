@@ -11,6 +11,7 @@ var remoteImagesLoadStep = 1; // 1 for all images, 2 for every other, 10 for qui
 var HQ = false;
 
 var remoteLoad = false;
+var finishedRemoteLoad = false;
 var targetLoadProg = 0;
 var imageList = [];
 var vID = 0;
@@ -36,7 +37,16 @@ var yRot = 0;
 
 const _supabaseUrl = 'https://cfzcrwfmlxquedvdajiw.supabase.co';
 
-
+var mainControl = false;
+var updatingUniforms = true;
+var fadeTintVal = [0.0,0.0,0.0];
+var target_fadeTintVal = [0.091,0.051,0.061];
+var mainTintVal = [0.0,0.0,0.0];
+var target_mainTintVal = [0.5,0.5,0.5];
+var fullBlurVal = 1.0;
+var target_fullBlurVal = 1.0;
+var blurModVal = 1.0;
+var finishedInitUniform = false;
 
 function LoadRenderer(){
     //loadImageURLs();
@@ -109,6 +119,10 @@ function SortImages(){
 
 function HideLoader(){
     document.getElementById("lc-id").style.display = "none";
+    mainControl = true;
+    target_fadeTintVal = [0.091,0.051,0.061];
+    target_mainTintVal = [1.0,1.0,1.0]
+    target_fullBlurVal = 0.0;
 }
 
 async function LoadShadersAndInitRenderer(){
@@ -256,6 +270,10 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
     var main_Sampler1UniformLocation = gl.getUniformLocation(prg_main, "sampler_1");
     var main_Sampler2UniformLocation = gl.getUniformLocation(prg_main, "sampler_2");
     var main_TopAndBottomUniformLocation = gl.getUniformLocation(prg_main, "topAndBottom");
+    var main_fadeTintUniformLocation = gl.getUniformLocation(prg_main, "fadeTint");
+    var main_mainTintUniformLocation = gl.getUniformLocation(prg_main, "mainTint");
+    var main_blurModUniformLocation = gl.getUniformLocation(prg_main, "blurMod");
+    var main_fullBlurUniformLocation = gl.getUniformLocation(prg_main, "fullBlur");
 
     var downsample_positionAttributeLocation = gl.getAttribLocation(prg_downsample, "vertPosition");
     var downsample_texCoordAttributeLocation = gl.getAttribLocation(prg_downsample, "vertTexCoord");
@@ -367,6 +385,11 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
     gl.useProgram(prg_main);
 
+    gl.uniform3fv(main_fadeTintUniformLocation,fadeTintVal);
+    gl.uniform3fv(main_mainTintUniformLocation,mainTintVal);
+    gl.uniform1f(main_blurModUniformLocation,blurModVal);
+    gl.uniform1f(main_fullBlurUniformLocation,1.0);
+
     videoElement = document.createElement("video");
     // var currentVideo = setupVideo("https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/Video_F0001_1500.mp4");
 
@@ -421,8 +444,9 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             canvas.width  = displayWidth;
             canvas.height = displayHeight;
 
+
             //let sa_t = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--sat"));
-            let sa_t = 110; //0
+            let sa_t = 0; //110
             sa_t *= (displayHeight / window.innerHeight);
             var correctUV = fitImageToUV(displayWidth, displayHeight, sa_t, true);
             var uTop = correctUV[0];
@@ -436,12 +460,12 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             //let enableVideo = false;
             var newPlaneTexCoords = 
             [ // U V
-                1.0, enableVideo ? uBottom : 1 - uBottom, canvas.width, displayHeight,
-                1.0, enableVideo ? uTop : 1 - uTop, canvas.width, displayHeight,
-                0.0, enableVideo ? uBottom : 1 - uBottom, canvas.width, displayHeight,
-                0.0, enableVideo ? uTop : 1 - uTop, canvas.width, displayHeight,
-                0.0, enableVideo ? uBottom : 1 - uBottom, canvas.width, displayHeight,
-                1.0, enableVideo ? uTop : 1 - uTop, canvas.width, displayHeight,
+                1.0, enableVideo && copyVideo ? uBottom : 1 - uBottom, canvas.width, displayHeight,
+                1.0, enableVideo && copyVideo ? uTop : 1 - uTop, canvas.width, displayHeight,
+                0.0, enableVideo && copyVideo ? uBottom : 1 - uBottom, canvas.width, displayHeight,
+                0.0, enableVideo && copyVideo ? uTop : 1 - uTop, canvas.width, displayHeight,
+                0.0, enableVideo && copyVideo ? uBottom : 1 - uBottom, canvas.width, displayHeight,
+                1.0, enableVideo && copyVideo ? uTop : 1 - uTop, canvas.width, displayHeight,
             ]
 
             gl.bindBuffer(gl.ARRAY_BUFFER, planeTexCoordsBuffer);
@@ -466,9 +490,17 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         now *= 0.001;
         var deltaTime = now - then;
         then = now;
-        
+
         let newState = previous_state != state;
         if(newState){
+            if(state != 1 && videoElement.src != null){
+                if(!videoElement.paused){
+                    videoElement.pause();
+                    videoElement.src = null;
+                    videoElement.load();
+                    console.log("EMPTYING VIDEO");
+                }
+            }
             if(state != 2){
                 equiReady = false;
                 target_xRot = 0;
@@ -507,7 +539,8 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         }
 
         let resized = resizeCanvasToDisplaySize(gl.canvas);
-        let redraw = previous_vID != vID || resized || (enableVideo && copyVideo) || (state == 2 && equiReady);
+        let redraw = previous_vID != vID || resized || (enableVideo && copyVideo) || (state == 2 && equiReady) || updatingUniforms;
+        //let canRedraw = state == 2 && enableVideo && copyVideo;
 
         if(redraw){
             //console.log("REDRAW");
@@ -615,6 +648,12 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             
             gl.uniform1i(main_Sampler1UniformLocation, 1);
             gl.uniform1i(main_Sampler2UniformLocation, equiRender ? 1 : 2);
+
+            gl.uniform3fv(main_fadeTintUniformLocation,fadeTintVal);
+            gl.uniform3fv(main_mainTintUniformLocation,mainTintVal);
+            gl.uniform1f(main_blurModUniformLocation,blurModVal);
+            gl.uniform1f(main_fullBlurUniformLocation,fullBlurVal);
+            
             gl.uniformMatrix4fv(main_mWorldUniformLocation, gl.FALSE, plane_worldMatrix);
             gl.uniformMatrix4fv(main_mViewUniformLocation, gl.FALSE, plane_viewMatrix);
             gl.uniformMatrix4fv(main_mProjUniformLocation, gl.FALSE, plane_projMatrix);
@@ -652,6 +691,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             if(idleTime > 1 && !setFrameVideo && !inputting){
                 state = 1;
                 setVideo(vID);
+                equiImage.src = null;
                 setFrameVideo = true;
             }
         }
@@ -663,7 +703,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         if(inputting && tapHoldTime < 10 && tapHoldTime > -10){
             tapHoldTime += deltaTime;
             if(Math.abs(tapPos[0] - holdPos[0]) < 10 && Math.abs(tapPos[1] - holdPos[1]) < 10 && tapHoldTime > 0.30
-            && vID == tap_vID && state != 2 && firstTapInCanvas){
+            && vID == tap_vID && state != 2 && firstTapInCanvas && !updatingUniforms){
                 state = 2;
                 lookX = tapPos[0];
                 lookY = tapPos[1];
@@ -673,11 +713,33 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             }
         }
 
+        let updateColour = fadeTintVal[0] < target_fadeTintVal[0] - 0.001 || fadeTintVal[0] > target_fadeTintVal[0] + 0.001
+                        || mainTintVal[0] < target_mainTintVal[0] - 0.001 || mainTintVal[0] > target_mainTintVal[0] + 0.001
+                        || fullBlurVal < target_fullBlurVal - 0.001 || fullBlurVal > target_fullBlurVal + 0.001;
+        if(!updateColour && updatingUniforms){
+            console.log("Finished updating uniforms");
+            fadeTintVal = target_fadeTintVal;
+            mainTintVal = target_mainTintVal;
+            fullBlurVal = target_fullBlurVal;
+            gl.useProgram(prg_main);
+            gl.uniform3fv(main_fadeTintUniformLocation,fadeTintVal);
+            gl.uniform3fv(main_mainTintUniformLocation,mainTintVal);
+            gl.uniform1f(main_fullBlurUniformLocation,fullBlurVal);
+            finishedInitUniform = true;
+        }
+        updatingUniforms = updateColour;
+
+        if(deltaTime < 0.1 && updatingUniforms){
+            let uSpeed = finishedInitUniform ? 6 : 3;
+            fadeTintVal = Lerp3(fadeTintVal, target_fadeTintVal, deltaTime * uSpeed);
+            mainTintVal = Lerp3(mainTintVal, target_mainTintVal, deltaTime * uSpeed);
+            fullBlurVal = Lerp(fullBlurVal, target_fullBlurVal, deltaTime * uSpeed);
+        }
+
         // if (ext) { // Memory Info
         //     const info = ext.getMemoryInfo();
         //     document.querySelector('#info').textContent = JSON.stringify(info, null, 2);
         // }
-
         requestAnimationFrame(render);
     }
     requestAnimationFrame(render);
@@ -816,7 +878,9 @@ function DB_0(){
 }
 
 function DB_1(){
-    state = 1;
+    console.log(videoElement);
+    //target_fullBlurVal = 1.0;
+    //state = 1;
 }
 
 function DB_2(){
@@ -831,4 +895,7 @@ function DB_3(){
 
 function DB_4(){
     vID = imageList.length - 1;
+    console.log(vID);
+    console.log(imageList[vID]);
+    //console.log(imageList);
 }

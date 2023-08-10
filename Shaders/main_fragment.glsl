@@ -6,19 +6,66 @@ uniform sampler2D sampler_1;
 uniform sampler2D sampler_2;
 uniform vec2 topAndBottom;
 
+uniform vec3 fadeTint;
+uniform vec3 mainTint;
+uniform float blurMod;
+uniform float fullBlur;
+
+mat4 brightnessMatrix(float brightness)
+{
+    return mat4( 1, 0, 0, 0,
+                 0, 1, 0, 0,
+                 0, 0, 1, 0,
+                 brightness, brightness, brightness, 1 );
+}
+
+mat4 contrastMatrix(float contrast)
+{
+	float t = ( 1.0 - contrast ) / 2.0;
+    
+    return mat4( contrast, 0, 0, 0,
+                 0, contrast, 0, 0,
+                 0, 0, contrast, 0,
+                 t, t, t, 1 );
+}
+
+mat4 saturationMatrix(float saturation)
+{
+    vec3 luminance = vec3( 0.3086, 0.6094, 0.0820 );
+    
+    float oneMinusSat = 1.0 - saturation;
+    
+    vec3 red = vec3( luminance.x * oneMinusSat );
+    red+= vec3( saturation, 0, 0 );
+    
+    vec3 green = vec3( luminance.y * oneMinusSat );
+    green += vec3( 0, saturation, 0 );
+    
+    vec3 blue = vec3( luminance.z * oneMinusSat );
+    blue += vec3( 0, 0, saturation );
+    
+    return mat4( red,     0,
+                 green,   0,
+                 blue,    0,
+                 0, 0, 0, 1 );
+}
+
+const float brightness = 0.0;
+const float contrast = 1.0;
+const float saturation = 1.0;
+
 void main() 
 {
    float topHardness = 0.1361;
    float bottomHardness = 0.1361;
-   float topInset = 0.0;
-   float bottomInset = 0.0;
+   float topInset = 0.1;
+   float bottomInset = 0.1;
 
-   float topBlurHardness = 0.1;
-   float bottomBlurHardness = 0.1;
-   float topBlurInset = 0.1;
-   float bottomBlurInset = 0.1;
+   float topBlurHardness = 0.01;
+   float bottomBlurHardness = 0.01;
+   float topBlurInset = 0.16;
+   float bottomBlurInset = 0.16;
 
-   vec4 fadeTint = vec4(0.091,0.051,0.061,1.0);
    
    vec2 v_UV = gl_FragCoord.xy / fragTexCoord.zw;
    vec2 u_UV = vec2(fragTexCoord.x,fragTexCoord.y);
@@ -29,7 +76,9 @@ void main()
    
    float blurTop = 1.0 - smoothstep(topAndBottom.y - topBlurInset, topAndBottom.y + topBlurHardness, v_UV.y); // y and 1.0
    float blurBottom = smoothstep(topAndBottom.x - bottomBlurHardness, topAndBottom.x + bottomBlurInset, v_UV.y); //0.0 and x
-   float blur = 1.0 - clamp(0.0, 1.0, (blurTop * blurBottom) + 0.0);
+   float blurMain = clamp(0.0, 1.0, (blurTop * blurBottom) + 0.0) * (1.0 - fullBlur);
+   float blur = 1.0 - blurMain;
+   //blur = 1.0;
 
    vec4 tintColour_1 = vec4(fadeTop, fadeTop, fadeTop, 1.0);
    vec4 tintColour_2 = vec4(fadeBottom, fadeBottom, fadeBottom, 1.0);
@@ -47,7 +96,7 @@ void main()
    const float Directions = 16.0;
    const float Quality = 4.0;
 
-   float Radius = 0.025 * blur * 2.0;
+   float Radius = 0.025 * blur * 2.0 * blurMod;
 
    vec4 Color = vec4(0);
 
@@ -68,11 +117,22 @@ void main()
       Color /= Quality * Directions + 1.0;
    }
 
-   vec4 composite = mix(img_2, Color, blur);
-   vec4 darkened = mix(fadeTint, composite, fades);
+   vec4 composite = mix(img_2, Color, blur) * vec4(mainTint,1.0);
+   vec4 darkened = mix(vec4(fadeTint,1.0), composite, fades);
+
+   vec2 c_UV = u_UV * 2.0 - 1.0;
+   c_UV.y *= 1.25;
+   float dist = length(c_UV) * 0.5;
 
    // gl_FragColor = texture2D(sampler_1,u_UV); //darkened
-   gl_FragColor = darkened;
+   gl_FragColor = brightnessMatrix( brightness ) *
+                  contrastMatrix( contrast ) * 
+                  saturationMatrix( saturation ) *
+                  darkened;
+
+   
+
+   //gl_FragColor =  darkened;
 
    //float stepf = smoothstep(0.995,0.995005,fragTexCoord.y);
    //gl_FragColor = vec4(stepf,stepf,stepf,1.0);

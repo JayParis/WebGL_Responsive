@@ -59,6 +59,8 @@ document.addEventListener("mouseup", e => { inputUp(e); });
 
 
 function inputDown(event) {
+    if(!mainControl)
+        return;
     inputting = true;
 
     let screenX = event.changedTouches ? event.changedTouches[0].clientX : event.x;
@@ -83,7 +85,7 @@ function inputDown(event) {
 
     if(inCanvas){
         //state = equi ? 2 : 0;
-        if(equi){
+        if(equi && !updatingUniforms){
             lookX = screenX;
             lookY = screenY;
             lastLookX = screenX;
@@ -91,7 +93,7 @@ function inputDown(event) {
             target_camFov = 51.6;
             equiReleased = false;
             state = 2;
-        }else{
+        }else if(!equi){
             tap_vID = vID;
         }
     }
@@ -103,7 +105,7 @@ function inputDown(event) {
 }
 
 function inputMove(event) {
-    if(!inputting)
+    if(!inputting || !mainControl)
         return;
 
     let screenX = event.changedTouches ? event.changedTouches[0].clientX : event.x;
@@ -119,7 +121,7 @@ function inputMove(event) {
     
             let moduloVal = 160 / remoteImagesLoadStep;
             vID = Math.abs(Mod(tap_vID + Math.trunc((tapPos[0] * vSens) - (holdPos[0] * vSens)), moduloVal));
-            console.log("vID:" + vID);
+            //console.log("vID:" + vID);
         }
     } else if(state == 1){
 
@@ -134,6 +136,8 @@ function inputMove(event) {
 
 function inputUp(event) {
     inputting = false;
+    if(!mainControl) 
+        return;
 
     let screenX = event.changedTouches ? event.changedTouches[0].clientX : event.x;
     let screenY = event.changedTouches ? event.changedTouches[0].clientY : event.y;
@@ -152,7 +156,9 @@ function inputUp(event) {
             vID += scrubLeft ? 1 : -1;
         }
         tap_vID = vID;
-        console.log("Snapped vID: " + vID);
+        //console.log("Snapped vID: " + vID);
+        //console.log(vID);
+        //console.log(imageList[vID]);
     }
 
     //if(equiLooking)
@@ -459,6 +465,14 @@ function Mod(n, m) {
 
 function Lerp (start, end, amt) {
     return (1-amt)*start+amt*end
+}
+
+function Lerp3 (start, end, amt) {
+    return [
+        Lerp(start[0], end[0], amt),
+        Lerp(start[1], end[1], amt),
+        Lerp(start[2], end[2], amt)
+    ]
 }
 
 function detectMob() {
