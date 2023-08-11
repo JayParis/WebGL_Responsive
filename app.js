@@ -111,7 +111,7 @@ function inputMove(event) {
     let screenX = event.changedTouches ? event.changedTouches[0].clientX : event.x;
     let screenY = event.changedTouches ? event.changedTouches[0].clientY : event.y;
     
-    if(state == 1 || (state == 2 && equiReleased))
+    if((state == 1 || (state == 2 && equiReleased)) && firstTapInCanvas)
         state = 0;
 
     if(state == 0){
@@ -129,8 +129,10 @@ function inputMove(event) {
         lookX = screenX;
         lookY = screenY;
     }
-
-    event.preventDefault();
+    
+    if(inputType != 0){
+        event.preventDefault();
+    }
 
 }
 
