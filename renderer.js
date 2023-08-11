@@ -38,10 +38,10 @@ var yRot = 0;
 const _supabaseUrl = 'https://cfzcrwfmlxquedvdajiw.supabase.co';
 
 var mainControl = false;
-var updatingUniforms = true;
-var fadeTintVal = [0.0,0.0,0.0];
+var updatingUniforms = false;
+var fadeTintVal = [0.091,0.051,0.061];
 var target_fadeTintVal = [0.091,0.051,0.061];
-var mainTintVal = [0.0,0.0,0.0];
+var mainTintVal = [0.5,0.5,0.5];
 var target_mainTintVal = [0.5,0.5,0.5];
 var fullBlurVal = 1.0;
 var target_fullBlurVal = 1.0;
@@ -128,6 +128,12 @@ function SortImages(){
 
 function HideLoader(){
     document.getElementById("lc-id").style.display = "none";
+    let mainCover = document.getElementById("mc-id");
+    mainCover.style.animation = "fade_up_main";
+    mainCover.style.animationTimingFunction = "linear";
+    mainCover.style.animationFillMode = "both";
+    mainCover.style.animationDuration = "0.3s";
+
     mainControl = true;
     target_fadeTintVal = [0.091,0.051,0.061];
     target_mainTintVal = [1.0,1.0,1.0]
