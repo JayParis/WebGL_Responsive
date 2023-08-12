@@ -164,6 +164,10 @@ function inputUp(event) {
         //console.log("Snapped vID: " + vID);
         //console.log(vID);
         //console.log(imageList[vID]);
+        if(!preLoadEqui){
+            console.log("PRE-LOAD EQUI");
+            preLoadEqui = true;
+        }
     }
 
     //if(equiLooking)

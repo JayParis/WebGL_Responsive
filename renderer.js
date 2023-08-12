@@ -23,6 +23,7 @@ var idleTime = 0;
 var initVideo = false;
 
 var equiImage = new Image();
+var preLoadEqui = false;
 var equiReady = false;
 var equiTime = 0;
 
@@ -690,6 +691,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         
 
         if(vID != previous_vID){
+            preLoadEqui = false;
             scrubLeft = vID >= previous_vID;
         }
 
@@ -829,9 +831,13 @@ function setupVideo(url) {
 }
 
 function setVideo(videoID, isIntro){
-    return;
-    let vidURL = isIntro ? 'https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/IntroVideoV2_P10001-0120.mp4' 
-    : 'https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/Video_F0001_1500.mp4';
+    //return;
+    //let vidURL = isIntro ? 'https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/IntroVideoV2_P10001-0120.mp4' 
+    //: 'https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/Video_F0001_1500.mp4';
+
+    let q = HQ ? 'HQ' : 'LQ';
+    let vidURL = _supabaseUrl + _storyUrl + ('/P'+currentPage.toString()) + '/Vd/' + q + '/Vd' + q + '_' + "1".padStart(4,'0') + '.mp4';
+    console.log(vidURL);
 
     if(!initVideo){
         setupVideo(vidURL);
