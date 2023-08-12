@@ -45,6 +45,9 @@ var firstTapInCanvas = false;
 var firstCanvasInteraciton = false;
 var equiReleased = false;
 
+var currentPage = 1;
+
+
 
 //console.log("isTouch: " + isTouch);
 document.addEventListener('contextmenu', event => event.preventDefault());
