@@ -166,6 +166,8 @@ function inputUp(event) {
         //console.log(imageList[vID]);
         if(!preLoadEqui){
             console.log("PRE-LOAD EQUI");
+            let imgPath = _supabaseUrl + _storyUrl + ('/P'+currentPage.toString()) + '/Eq/Eq_' + "1".padStart(4,'0') + '.webp';
+            equiImage.src = imgPath;
             preLoadEqui = true;
         }
     }

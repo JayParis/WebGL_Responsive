@@ -43,14 +43,14 @@ var mainControl = false;
 var updatingUniforms = false;
 var fadeTintVal = [0.091,0.051,0.061];
 var target_fadeTintVal = [0.091,0.051,0.061];
-var mainTintVal = [0.5,0.5,0.5];
-var target_mainTintVal = [0.5,0.5,0.5];
+var mainTintVal = [0.25,0.25,0.25];
+var target_mainTintVal = [0.25,0.25,0.25];
 var fullBlurVal = 1.0;
 var target_fullBlurVal = 1.0;
 var blurModVal = 1.0;
 var finishedInitUniform = false;
 
-var loadIntro = false;
+var loadIntro = true;
 var introFirstFrame = undefined;
 
 function LoadRenderer(){
@@ -66,7 +66,7 @@ function RemoteImage(index, firstImage){
     let filename = '/Mn' + qualityPath + '_' + end;
     let fullPath = _supabaseUrl + _storyUrl + ('/P'+currentPage.toString()) + '/Mn/' + qualityPath + filename + '.webp';
     if(firstImage && loadIntro){
-        fullPath = _supabaseUrl + _storyUrl + '/In/InFrame.webp';
+        fullPath = _supabaseUrl + _storyUrl + ('/P'+currentPage.toString()) + '/In/InFrame.webp';
     }
     fetch(fullPath)
             .then(res => res.blob())
@@ -129,11 +129,7 @@ function SortImages(){
 
 function HideLoader(){
     document.getElementById("lc-id").style.display = "none";
-    let mainCover = document.getElementById("mc-id");
-    mainCover.style.animation = "fade_up_main";
-    mainCover.style.animationTimingFunction = "linear";
-    mainCover.style.animationFillMode = "both";
-    mainCover.style.animationDuration = "0.3s";
+    
 
     mainControl = true;
     target_fadeTintVal = [0.091,0.051,0.061];
@@ -242,6 +238,12 @@ function parseOBJ(text) {
 }
 
 var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragmentShaderText, downsampleShaderText, equiShaderText, equiObjText){
+    let mainCover = document.getElementById("mc-id");
+    mainCover.style.animation = "fade_up_main";
+    mainCover.style.animationTimingFunction = "linear";
+    mainCover.style.animationFillMode = "both";
+    mainCover.style.animationDuration = "0.3s";
+    
     var canvas = document.getElementById('application');
     var gl = canvas.getContext('webgl2');
     if(!gl) { console.log("WebGL not supported, falling back on experimental"); gl = canvas.getContext('experimental-webgl'); }
@@ -416,6 +418,14 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
     gl.uniform1f(main_fullBlurUniformLocation,1.0);
 
     videoElement = document.createElement("video");
+    if(loadIntro){
+        videoElement.addEventListener("ended", (event) => {
+            console.log("VID HAS ENDED");
+            introFirstFrame = undefined;
+            state = 0;
+        });
+    }
+    
     // var currentVideo = setupVideo("https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/Video_F0001_1500.mp4");
 
     // ------------ Resize ->
@@ -642,7 +652,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
                     gl.RGBA,            // internal format
                     gl.RGBA,            // format
                     gl.UNSIGNED_BYTE,   // type
-                    (enableVideo && copyVideo) ? videoElement : imageList[vID][0]
+                    (enableVideo && copyVideo) ? videoElement : (introFirstFrame != null && loadIntro) ? introFirstFrame : imageList[vID][0]
                 );
 
                 gl.uniform1i(downsample_Sampler1UniformLocation, 0);
@@ -688,7 +698,6 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
             gl.drawArrays(gl.TRIANGLES, 0, 6); //6
         }
-        
 
         if(vID != previous_vID){
             preLoadEqui = false;
@@ -837,6 +846,8 @@ function setVideo(videoID, isIntro){
 
     let q = HQ ? 'HQ' : 'LQ';
     let vidURL = _supabaseUrl + _storyUrl + ('/P'+currentPage.toString()) + '/Vd/' + q + '/Vd' + q + '_' + "1".padStart(4,'0') + '.mp4';
+    if(isIntro)
+        vidURL = _supabaseUrl + _storyUrl + ('/P'+currentPage.toString()) + '/In/InVd.mp4'
     console.log(vidURL);
 
     if(!initVideo){
