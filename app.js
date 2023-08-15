@@ -47,6 +47,8 @@ var equiReleased = false;
 
 var currentPage = 1;
 
+var revealTapPos = [0,0];
+var revealHoldPos = [0,0];
 
 
 //console.log("isTouch: " + isTouch);
@@ -62,14 +64,22 @@ document.addEventListener("mouseup", e => { inputUp(e); });
 
 
 function inputDown(event) {
-    if(!mainControl)
-        return;
-    inputting = true;
 
     let screenX = event.changedTouches ? event.changedTouches[0].clientX : event.x;
     let screenY = event.changedTouches ? event.changedTouches[0].clientY : event.y;
     let inCanvas = screenX > canvasLeft && screenX < (canvasLeft + canvasWidth);
-    
+
+    inputting = inCanvas;
+
+    if(!revealed && inCanvas){
+        revealTapPos = [screenX, screenY];
+        revealHoldPos = [screenX, screenY];
+        console.log(revealTapPos);
+        return;
+    }
+    if(!mainControl)
+        return;
+
     let equi = event.changedTouches ? false : event.which == 3;
 
     if(inCanvas){
@@ -108,11 +118,19 @@ function inputDown(event) {
 }
 
 function inputMove(event) {
-    if(!inputting || !mainControl)
-        return;
-
     let screenX = event.changedTouches ? event.changedTouches[0].clientX : event.x;
     let screenY = event.changedTouches ? event.changedTouches[0].clientY : event.y;
+
+    if(!revealed && inputting){
+        revealHoldPos = [screenX,screenY];
+        let r_delta = [Math.abs(revealTapPos[0] - revealHoldPos[0]), Math.abs(revealTapPos[1] - revealHoldPos[1])];
+        let mag = Math.sqrt(r_delta[0] * r_delta[0] + r_delta[1] * r_delta[1]);
+        target_revealProgress = mag * 0.0015;
+        console.log(target_revealProgress);
+        return;
+    }
+    if(!inputting || !mainControl)
+        return;
     
     if((state == 1 || (state == 2 && equiReleased)) && firstTapInCanvas)
         state = 0;
@@ -141,6 +159,19 @@ function inputMove(event) {
 
 function inputUp(event) {
     inputting = false;
+    if(!revealed){
+        revealTapPos = [0,0];
+        revealHoldPos = [0,0];
+        if(target_revealProgress > 0.27){
+            target_revealProgress = 2;
+            revealed = true;
+            if(loadIntro)
+                PlayIntroVideo();
+        }else{
+            target_revealProgress = 0;
+        }
+        return;
+    }
     if(!mainControl) 
         return;
 
@@ -252,6 +283,15 @@ function LoadedPage() {
     SetUpIconEvent('path4866', 'na-id', '--next-arrow', 'next');
     //SetUpIconEvent('path1695', 'hover-replay-id', '--replay-icon', 'replay');
 
+    document.getElementById('hover-replay-id').addEventListener('mousedown', () => { //Replay Pressed
+        if(hasInit && mainControl){
+            videoElement.pause();
+            videoElement.src = null;
+            videoElement.load();
+            copyVideo = false;
+            PlayIntroVideo();
+        }
+    });
 
     document.getElementById('hover-volume-id').addEventListener('mousedown', () => {
         console.log("Sound Pressed");

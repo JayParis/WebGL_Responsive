@@ -50,8 +50,12 @@ var target_fullBlurVal = 1.0;
 var blurModVal = 1.0;
 var finishedInitUniform = false;
 
-var loadIntro = true;
+var loadIntro = false;
 var introFirstFrame = undefined;
+
+var revealed = false;
+var revealProgress = 0;
+var target_revealProgress = 0;
 
 function LoadRenderer(){
     //loadImageURLs();
@@ -135,7 +139,7 @@ function HideLoader(){
     target_fadeTintVal = [0.091,0.051,0.061];
     target_mainTintVal = [1.0,1.0,1.0]
     target_fullBlurVal = 0.0;
-    if(loadIntro)
+    if(loadIntro && revealed)
         PlayIntroVideo();
 }
 
@@ -301,6 +305,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
     var main_mainTintUniformLocation = gl.getUniformLocation(prg_main, "mainTint");
     var main_blurModUniformLocation = gl.getUniformLocation(prg_main, "blurMod");
     var main_fullBlurUniformLocation = gl.getUniformLocation(prg_main, "fullBlur");
+    var main_revealProgressUniformLocation = gl.getUniformLocation(prg_main, "revealProgress");
 
     var downsample_positionAttributeLocation = gl.getAttribLocation(prg_downsample, "vertPosition");
     var downsample_texCoordAttributeLocation = gl.getAttribLocation(prg_downsample, "vertTexCoord");
@@ -416,15 +421,14 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
     gl.uniform3fv(main_mainTintUniformLocation,mainTintVal);
     gl.uniform1f(main_blurModUniformLocation,blurModVal);
     gl.uniform1f(main_fullBlurUniformLocation,1.0);
+    gl.uniform2fv(main_revealProgressUniformLocation,[0.0,0.001]);//1.25066
 
     videoElement = document.createElement("video");
-    if(loadIntro){
-        videoElement.addEventListener("ended", (event) => {
-            console.log("VID HAS ENDED");
-            introFirstFrame = undefined;
-            state = 0;
-        });
-    }
+    videoElement.addEventListener("ended", (event) => {
+        console.log("VID HAS ENDED");
+        introFirstFrame = undefined;
+        state = 0;
+    });
     
     // var currentVideo = setupVideo("https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/Video_F0001_1500.mp4");
 
@@ -691,6 +695,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             gl.uniform3fv(main_mainTintUniformLocation,mainTintVal);
             gl.uniform1f(main_blurModUniformLocation,blurModVal);
             gl.uniform1f(main_fullBlurUniformLocation,fullBlurVal);
+            gl.uniform2fv(main_revealProgressUniformLocation,[revealProgress*0.5,revealProgress * 4.82]);
             
             gl.uniformMatrix4fv(main_mWorldUniformLocation, gl.FALSE, plane_worldMatrix);
             gl.uniformMatrix4fv(main_mViewUniformLocation, gl.FALSE, plane_viewMatrix);
@@ -753,16 +758,19 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
 
         let updateColour = fadeTintVal[0] < target_fadeTintVal[0] - 0.001 || fadeTintVal[0] > target_fadeTintVal[0] + 0.001
                         || mainTintVal[0] < target_mainTintVal[0] - 0.001 || mainTintVal[0] > target_mainTintVal[0] + 0.001
-                        || fullBlurVal < target_fullBlurVal - 0.001 || fullBlurVal > target_fullBlurVal + 0.001;
+                        || fullBlurVal < target_fullBlurVal - 0.001 || fullBlurVal > target_fullBlurVal + 0.001
+                        || revealProgress < target_revealProgress - 0.001 || revealProgress > target_revealProgress + 0.001;
         if(!updateColour && updatingUniforms){
             console.log("Finished updating uniforms");
             fadeTintVal = target_fadeTintVal;
             mainTintVal = target_mainTintVal;
             fullBlurVal = target_fullBlurVal;
+            revealProgress = target_revealProgress;
             gl.useProgram(prg_main);
             gl.uniform3fv(main_fadeTintUniformLocation,fadeTintVal);
             gl.uniform3fv(main_mainTintUniformLocation,mainTintVal);
             gl.uniform1f(main_fullBlurUniformLocation,fullBlurVal);
+            gl.uniform2fv(main_revealProgressUniformLocation,[revealProgress*0.5,revealProgress * 4.82]);
             finishedInitUniform = true;
         }
         updatingUniforms = updateColour;
@@ -772,6 +780,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             fadeTintVal = Lerp3(fadeTintVal, target_fadeTintVal, deltaTime * uSpeed);
             mainTintVal = Lerp3(mainTintVal, target_mainTintVal, deltaTime * uSpeed);
             fullBlurVal = Lerp(fullBlurVal, target_fullBlurVal, deltaTime * uSpeed);
+            revealProgress = Lerp(revealProgress, target_revealProgress, deltaTime * uSpeed * (revealed ? 1 : 2));
         }
 
         // if (ext) { // Memory Info

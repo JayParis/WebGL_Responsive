@@ -10,6 +10,7 @@ uniform vec3 fadeTint;
 uniform vec3 mainTint;
 uniform float blurMod;
 uniform float fullBlur;
+uniform vec2 revealProgress;
 
 mat4 brightnessMatrix(float brightness)
 {
@@ -54,6 +55,10 @@ const float brightness = 0.0;
 const float contrast = 1.0;
 const float saturation = 1.0;
 
+float map(float value, float min1, float max1, float min2, float max2) {
+  return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
+}
+
 void main() 
 {
    float topHardness = 0.1361;
@@ -72,12 +77,21 @@ void main()
 
    float fadeTop = 1.0 - smoothstep(topAndBottom.y - topInset, topAndBottom.y + topHardness, v_UV.y); // y and 1.0
    float fadeBottom = smoothstep(topAndBottom.x - bottomHardness, topAndBottom.x + bottomInset, v_UV.y); //0.0 and x
-   float fades = clamp(0.0, 1.0, (fadeTop * fadeBottom) + 0.0);
+   //float fades = clamp(0.0, 1.0, (fadeTop * fadeBottom) + 0.0);
+   float fades = clamp((fadeTop * fadeBottom) + 0.0, 0.0, 1.0);
    
+   vec2 c_UV = u_UV * 2.0 - 1.0;
+   c_UV.y *= 1.25;
+   float reveal = length(c_UV);
+   reveal = map(reveal,revealProgress.x,revealProgress.y,0.0,1.0);
+   reveal = clamp(reveal,0.0,1.0);
+
    float blurTop = 1.0 - smoothstep(topAndBottom.y - topBlurInset, topAndBottom.y + topBlurHardness, v_UV.y); // y and 1.0
    float blurBottom = smoothstep(topAndBottom.x - bottomBlurHardness, topAndBottom.x + bottomBlurInset, v_UV.y); //0.0 and x
-   float blurMain = clamp(0.0, 1.0, (blurTop * blurBottom) + 0.0) * (1.0 - fullBlur);
+   //float blurMain = clamp(0.0, 1.0, (blurTop * blurBottom) + 0.0) * (1.0 - fullBlur);
+   float blurMain = clamp(blurTop * blurBottom, 0.0, 1.0) * (1.0 - fullBlur);
    float blur = 1.0 - blurMain;
+   blur = mix(blur,1.0,reveal);
    //blur = 1.0;
 
    vec4 tintColour_1 = vec4(fadeTop, fadeTop, fadeTop, 1.0);
@@ -120,9 +134,7 @@ void main()
    vec4 composite = mix(img_2, Color, blur) * vec4(mainTint,1.0);
    vec4 darkened = mix(vec4(fadeTint,1.0), composite, fades);
 
-   vec2 c_UV = u_UV * 2.0 - 1.0;
-   c_UV.y *= 1.25;
-   float dist = length(c_UV) * 0.5;
+   
 
    // gl_FragColor = texture2D(sampler_1,u_UV); //darkened
    gl_FragColor = brightnessMatrix( brightness ) *
@@ -130,7 +142,7 @@ void main()
                   saturationMatrix( saturation ) *
                   darkened;
 
-   
+   //gl_FragColor = vec4(vec3(blur),1.0); //reveal
 
    //gl_FragColor =  darkened;
 
