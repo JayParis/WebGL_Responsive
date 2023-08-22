@@ -423,14 +423,14 @@ input[type=range]:focus::-moz-range-track {
 .loading-svg-cont {
     /* background-color: rgb(108, 10, 169); */
     /*  Delete */
-    /* display: none;  */
+    display: none; 
     width: 130px;
     height: 130px;
 }
 
 .reveal-svg-cont {
     /* background-color: rgb(108, 10, 169); */
-    display: none; 
+    /* display: none;  */
     width: 280px;
     height: 280px;
     /* opacity: 50%; */
