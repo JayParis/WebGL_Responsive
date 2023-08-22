@@ -934,13 +934,20 @@ function DB_0(){
 }
 
 function DB_1(){
-    console.log(videoElement);
+    //console.log(videoElement);
+    
     //target_fullBlurVal = 1.0;
     //state = 1;
+    let revealObj = document.getElementById("rev-obj-id");
+    revealObj.contentDocument.wobbleNSFW();
 }
 
 function DB_2(){
-    state = 2;
+    //state = 2;
+    
+    let revealObj = document.getElementById("rev-obj-id");
+    //console.log(revealObj.contentDocument.playNSFW);
+    revealObj.contentDocument.playNSFW();
 }
 
 function DB_3(){

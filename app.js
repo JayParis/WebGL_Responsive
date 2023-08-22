@@ -351,7 +351,6 @@ function SetUpIconEvent(pathID, hoverID, varName, animName, timing){
 }
 
 
-
 function ToggleHoverState(hov){
 
     ks.globalPlay();
