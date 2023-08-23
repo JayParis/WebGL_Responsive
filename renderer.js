@@ -792,7 +792,7 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             doubleTapDelay -= deltaTime * 3;
         }
 
-        if(inputting && tapHoldTime < 10 && tapHoldTime > -10){
+        if(inputting && tapHoldTime < 10 && tapHoldTime > -10 && revealed){
             tapHoldTime += deltaTime;
             if(Math.abs(tapPos[0] - holdPos[0]) < 10 && Math.abs(tapPos[1] - holdPos[1]) < 10 && tapHoldTime > 0.30
             && vID == tap_vID && state != 2 && firstTapInCanvas && !updatingUniforms){

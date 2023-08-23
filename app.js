@@ -69,8 +69,10 @@ function inputDown(event) {
     let screenX = event.changedTouches ? event.changedTouches[0].clientX : event.x;
     let screenY = event.changedTouches ? event.changedTouches[0].clientY : event.y;
     let inCanvas = screenX > canvasLeft && screenX < (canvasLeft + canvasWidth);
-
+    if(!mainControl)
+        return;
     inputting = inCanvas && mainRevealFinished;
+    firstTapInCanvas = inCanvas;
 
     if(!revealed && inCanvas){
         //if(!mainRevealFinished) return;
@@ -79,8 +81,7 @@ function inputDown(event) {
         console.log(revealTapPos);
         return;
     }
-    if(!mainControl)
-        return;
+    
 
     let equi = event.changedTouches ? false : event.which == 3;
 
@@ -113,7 +114,6 @@ function inputDown(event) {
         }
     }
 
-    firstTapInCanvas = inCanvas;
 
     tapPos = [screenX, screenY];
     holdPos = [screenX, screenY];
@@ -122,7 +122,9 @@ function inputDown(event) {
 function inputMove(event) {
     let screenX = event.changedTouches ? event.changedTouches[0].clientX : event.x;
     let screenY = event.changedTouches ? event.changedTouches[0].clientY : event.y;
-
+    
+    if(!inputting || !mainControl)
+        return;
     if(!revealed && inputting){
         //if(!mainRevealFinished) return;
         revealHoldPos = [screenX,screenY];
@@ -135,8 +137,6 @@ function inputMove(event) {
         }
         return;
     }
-    if(!inputting || !mainControl)
-        return;
     
     if((state == 1 || (state == 2 && equiReleased)) && firstTapInCanvas)
         state = 0;
@@ -172,6 +172,9 @@ function inputUp(event) {
         revealHoldPos = [0,0];
         if(target_revealProgress > 0.27){
             target_revealProgress = 2;
+            target_brightness = Json_BCS[0];
+            target_contrast = Json_BCS[1];
+            target_saturation = Json_BCS[2];
             revealed = true;
             if(loadIntro)
                 PlayIntroVideo();
@@ -182,15 +185,17 @@ function inputUp(event) {
                     FadeInReveal("reveal_fade_in",0.3);
                     RevealSVGAnim(0,false);
                 }
-            }else{
-                RevealSVGAnim(0,false);
+            }else if (firstTapInCanvas){
+                RevealSVGAnim(0,false); // needs to be in canvas
             }
             target_revealProgress = 0;
+            target_brightness = Json_revealBCS[0];
+            target_contrast = Json_revealBCS[1];
+            target_saturation = Json_revealBCS[2];
             playedRevealMain = false;
         }
         return;
     }
-    
 
     let screenX = event.changedTouches ? event.changedTouches[0].clientX : event.x;
     let screenY = event.changedTouches ? event.changedTouches[0].clientY : event.y;
