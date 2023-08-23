@@ -9,10 +9,15 @@
 
             "loadingMainTint": [0.25,0.25,0.25],
             "loadingFadeTint": [0.091,0.051,0.061],
+            "loadingBCS": [0.0,1.0,1.0],
+
             "revealMainTint": [0.5,0.5,0.5],
             "revealFadeTint": [0.091,0.051,0.061],
+            "revealBCS": [0.15,1.25,1.5],
+
             "mainTint": [1.0,1.0,1.0],
-            "fadeTint": [0.091,0.051,0.061]
+            "fadeTint": [0.091,0.051,0.061],
+            "BCS": [0.0,1.0,1.0]
         }
     ]
 }

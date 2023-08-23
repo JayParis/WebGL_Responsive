@@ -12,6 +12,11 @@ uniform float blurMod;
 uniform float fullBlur;
 uniform vec2 revealProgress;
 
+uniform float brightness;
+uniform float contrast;
+uniform float saturation;
+
+
 mat4 brightnessMatrix(float brightness)
 {
     return mat4( 1, 0, 0, 0,
@@ -50,10 +55,6 @@ mat4 saturationMatrix(float saturation)
                  blue,    0,
                  0, 0, 0, 1 );
 }
-
-const float brightness = 0.0;
-const float contrast = 1.0;
-const float saturation = 1.0;
 
 float map(float value, float min1, float max1, float min2, float max2) {
   return min2 + (value - min1) * (max2 - min2) / (max1 - min1);

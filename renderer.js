@@ -60,17 +60,31 @@ var currentRevealObject = undefined;
 var needsToResetReveal = false;
 var mainRevealFinished = true;
 
+var brightness = 0.0;
+var target_brightness = 0.0;
+var contrast = 1.0;
+var target_contrast = 1.0;
+var saturation = 1.0;
+var target_saturation = 1.0;
+
 var Json_loadingMainTint = [0.0,0.0,0.0];
 var Json_loadingFadeTint = [0.0,0.0,0.0];
+var Json_loadingBCS = [0.0,1.0,1.0];
 var Json_revealMainTint = [0.0,0.0,0.0];
 var Json_revealFadeTint = [0.0,0.0,0.0];
+var Json_revealBCS = [0.0,1.0,1.0];
 var Json_mainTint = [0.0,0.0,0.0];
 var Json_fadeTint = [0.0,0.0,0.0];
+var Json_BCS = [0.0,1.0,1.0];
+
 
 function LoadRenderer(){
     //loadImageURLs();
     target_mainTintVal = Json_loadingMainTint;
     target_fadeTintVal = Json_loadingFadeTint;
+    target_brightness = Json_loadingBCS[0];
+    target_contrast = Json_loadingBCS[1];
+    target_saturation = Json_loadingBCS[2];
 
     vID = 0;
     tap_vID = 0;
@@ -155,6 +169,12 @@ function HideLoader(){
     mainControl = true;
     target_fadeTintVal = revealed ? Json_fadeTint : Json_revealFadeTint;
     target_mainTintVal = revealed ? Json_mainTint : Json_revealMainTint;
+
+    target_brightness = revealed ? Json_BCS[0] : Json_revealBCS[0];
+    target_contrast = revealed ? Json_BCS[1] : Json_revealBCS[1];
+    target_saturation = revealed ? Json_BCS[2] : Json_revealBCS[2];
+
+
     target_fullBlurVal = 0.0;
     console.log("Hide Loader");
     if(loadIntro && revealed)
@@ -325,6 +345,10 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
     var main_fullBlurUniformLocation = gl.getUniformLocation(prg_main, "fullBlur");
     var main_revealProgressUniformLocation = gl.getUniformLocation(prg_main, "revealProgress");
 
+    var main_brightnessUniformLocation = gl.getUniformLocation(prg_main, "brightness");
+    var main_contrastUniformLocation = gl.getUniformLocation(prg_main, "contrast");
+    var main_saturationUniformLocation = gl.getUniformLocation(prg_main, "saturation");
+
     var downsample_positionAttributeLocation = gl.getAttribLocation(prg_downsample, "vertPosition");
     var downsample_texCoordAttributeLocation = gl.getAttribLocation(prg_downsample, "vertTexCoord");
     var downsample_mWorldUniformLocation = gl.getUniformLocation(prg_downsample, "mWorld");
@@ -440,6 +464,10 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
     gl.uniform1f(main_blurModUniformLocation,blurModVal);
     gl.uniform1f(main_fullBlurUniformLocation,1.0);
     gl.uniform2fv(main_revealProgressUniformLocation,[0.0,0.001]);//1.25066
+    gl.uniform1f(main_brightnessUniformLocation,0.0);
+    gl.uniform1f(main_contrastUniformLocation,1.0);
+    gl.uniform1f(main_saturationUniformLocation,0.0);
+
 
     videoElement = document.createElement("video");
     videoElement.addEventListener("ended", (event) => {
@@ -714,6 +742,9 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             gl.uniform1f(main_blurModUniformLocation,blurModVal);
             gl.uniform1f(main_fullBlurUniformLocation,fullBlurVal);
             gl.uniform2fv(main_revealProgressUniformLocation,[revealProgress*0.5,revealProgress * 4.82]);
+            gl.uniform1f(main_brightnessUniformLocation,brightness);
+            gl.uniform1f(main_contrastUniformLocation,contrast);
+            gl.uniform1f(main_saturationUniformLocation,saturation);
             
             gl.uniformMatrix4fv(main_mWorldUniformLocation, gl.FALSE, plane_worldMatrix);
             gl.uniformMatrix4fv(main_mViewUniformLocation, gl.FALSE, plane_viewMatrix);
@@ -777,22 +808,34 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         if(!revealed && mainControl){
             let rev_t = Clamp(revealProgress * 4,0.0,1.0);
             target_mainTintVal = Lerp3(Json_revealMainTint,Json_mainTint,rev_t);
+            target_brightness = Lerp(Json_revealBCS[0],Json_BCS[0],rev_t);
+            target_contrast = Lerp(Json_revealBCS[1],Json_BCS[1],rev_t);
+            target_saturation = Lerp(Json_revealBCS[2],Json_BCS[2],rev_t);
         }
         let updateColour = fadeTintVal[0] < target_fadeTintVal[0] - 0.001 || fadeTintVal[0] > target_fadeTintVal[0] + 0.001
                         || mainTintVal[0] < target_mainTintVal[0] - 0.001 || mainTintVal[0] > target_mainTintVal[0] + 0.001
                         || fullBlurVal < target_fullBlurVal - 0.001 || fullBlurVal > target_fullBlurVal + 0.001
-                        || revealProgress < target_revealProgress - 0.001 || revealProgress > target_revealProgress + 0.001;
+                        || revealProgress < target_revealProgress - 0.001 || revealProgress > target_revealProgress + 0.001
+                        || brightness < target_brightness - 0.001 || brightness > target_brightness + 0.001
+                        || contrast < target_contrast - 0.001 || contrast > target_contrast + 0.001
+                        || saturation < target_saturation - 0.001 || saturation > target_saturation + 0.001;
         if(!updateColour && updatingUniforms){
             console.log("Finished updating uniforms");
             fadeTintVal = target_fadeTintVal;
             mainTintVal = target_mainTintVal;
             fullBlurVal = target_fullBlurVal;
             revealProgress = target_revealProgress;
+            brightness = target_brightness;
+            contrast = target_contrast;
+            saturation = target_saturation;
             gl.useProgram(prg_main);
             gl.uniform3fv(main_fadeTintUniformLocation,fadeTintVal);
             gl.uniform3fv(main_mainTintUniformLocation,mainTintVal);
             gl.uniform1f(main_fullBlurUniformLocation,fullBlurVal);
             gl.uniform2fv(main_revealProgressUniformLocation,[revealProgress*0.5,revealProgress * 4.82]);
+            gl.uniform1f(main_brightnessUniformLocation,brightness);
+            gl.uniform1f(main_contrastUniformLocation,contrast);
+            gl.uniform1f(main_saturationUniformLocation,saturation);
             finishedInitUniform = true;
         }
         updatingUniforms = updateColour;
@@ -803,6 +846,9 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             mainTintVal = Lerp3(mainTintVal, target_mainTintVal, deltaTime * uSpeed);
             fullBlurVal = Lerp(fullBlurVal, target_fullBlurVal, deltaTime * uSpeed);
             revealProgress = Lerp(revealProgress, target_revealProgress, deltaTime * uSpeed * (revealed ? 1 : 2));
+            brightness = Lerp(brightness, target_brightness, deltaTime * uSpeed);
+            contrast = Lerp(contrast, target_contrast, deltaTime * uSpeed);
+            saturation = Lerp(saturation, target_saturation, deltaTime * uSpeed);
         }
 
         // if (ext) { // Memory Info
@@ -999,10 +1045,15 @@ async function SetPageJSONParams(){
 
     Json_loadingMainTint = pageData.loadingMainTint;
     Json_loadingFadeTint = pageData.loadingFadeTint;
+    Json_loadingBCS = pageData.loadingBCS;
+
     Json_revealMainTint = pageData.revealMainTint;
     Json_revealFadeTint = pageData.revealFadeTint;
+    Json_revealBCS = pageData.revealBCS;
+
     Json_mainTint = pageData.mainTint;
     Json_fadeTint = pageData.fadeTint;
+    Json_BCS = pageData.BCS;
 
     console.log(pageData.paraText);
 }
