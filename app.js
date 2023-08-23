@@ -49,6 +49,7 @@ var currentPage = 1;
 
 var revealTapPos = [0,0];
 var revealHoldPos = [0,0];
+var playedRevealMain = false;
 
 
 //console.log("isTouch: " + isTouch);
@@ -69,9 +70,10 @@ function inputDown(event) {
     let screenY = event.changedTouches ? event.changedTouches[0].clientY : event.y;
     let inCanvas = screenX > canvasLeft && screenX < (canvasLeft + canvasWidth);
 
-    inputting = inCanvas;
+    inputting = inCanvas && mainRevealFinished;
 
     if(!revealed && inCanvas){
+        //if(!mainRevealFinished) return;
         revealTapPos = [screenX, screenY];
         revealHoldPos = [screenX, screenY];
         console.log(revealTapPos);
@@ -122,11 +124,15 @@ function inputMove(event) {
     let screenY = event.changedTouches ? event.changedTouches[0].clientY : event.y;
 
     if(!revealed && inputting){
+        //if(!mainRevealFinished) return;
         revealHoldPos = [screenX,screenY];
         let r_delta = [Math.abs(revealTapPos[0] - revealHoldPos[0]), Math.abs(revealTapPos[1] - revealHoldPos[1])];
         let mag = Math.sqrt(r_delta[0] * r_delta[0] + r_delta[1] * r_delta[1]);
         target_revealProgress = mag * 0.0015;
-        console.log(target_revealProgress);
+        if(!playedRevealMain && target_revealProgress > 0.05){
+            RevealSVGAnim(1,true);
+            playedRevealMain = true;
+        }
         return;
     }
     if(!inputting || !mainControl)
@@ -159,6 +165,8 @@ function inputMove(event) {
 
 function inputUp(event) {
     inputting = false;
+    if(!mainControl) 
+        return;
     if(!revealed){
         revealTapPos = [0,0];
         revealHoldPos = [0,0];
@@ -168,12 +176,21 @@ function inputUp(event) {
             if(loadIntro)
                 PlayIntroVideo();
         }else{
+            if(playedRevealMain){ // Needs reset fade in
+                needsToResetReveal = true;
+                if(mainRevealFinished){
+                    FadeInReveal("reveal_fade_in",0.3);
+                    RevealSVGAnim(0,false);
+                }
+            }else{
+                RevealSVGAnim(0,false);
+            }
             target_revealProgress = 0;
+            playedRevealMain = false;
         }
         return;
     }
-    if(!mainControl) 
-        return;
+    
 
     let screenX = event.changedTouches ? event.changedTouches[0].clientX : event.x;
     let screenY = event.changedTouches ? event.changedTouches[0].clientY : event.y;

@@ -423,7 +423,8 @@ input[type=range]:focus::-moz-range-track {
 .loading-svg-cont {
     /* background-color: rgb(108, 10, 169); */
     /*  Delete */
-    display: none; 
+    /* display: none;  */
+    position: absolute;
     width: 130px;
     height: 130px;
 }
@@ -431,10 +432,19 @@ input[type=range]:focus::-moz-range-track {
 .reveal-svg-cont {
     /* background-color: rgb(108, 10, 169); */
     /* display: none;  */
-    width: 280px;
-    height: 280px;
-    /* opacity: 50%; */
+    width: 250px;
+    height: 250px;
+    opacity: 0%;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+    user-select: none;
+    pointer-events: none;
 }
+@keyframes reveal_fade_in { 0% { opacity: 0%; } 100% { opacity: 100%; } }
+@keyframes reveal_fade_stay { 0% { opacity: 100%; } 50% { opacity: 99%; } 100% { opacity: 100%; } }
+@keyframes reveal_fade_out { 0% { opacity: 100%; } 100% { opacity: 0%; } }
+
 
 #main-id{
     -webkit-user-select: none;

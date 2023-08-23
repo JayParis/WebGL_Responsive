@@ -56,9 +56,22 @@ var introFirstFrame = undefined;
 var revealed = false;
 var revealProgress = 0;
 var target_revealProgress = 0;
+var currentRevealObject = undefined;
+var needsToResetReveal = false;
+var mainRevealFinished = true;
+
+var Json_loadingMainTint = [0.0,0.0,0.0];
+var Json_loadingFadeTint = [0.0,0.0,0.0];
+var Json_revealMainTint = [0.0,0.0,0.0];
+var Json_revealFadeTint = [0.0,0.0,0.0];
+var Json_mainTint = [0.0,0.0,0.0];
+var Json_fadeTint = [0.0,0.0,0.0];
 
 function LoadRenderer(){
     //loadImageURLs();
+    target_mainTintVal = Json_loadingMainTint;
+    target_fadeTintVal = Json_loadingFadeTint;
+
     vID = 0;
     tap_vID = 0;
     RemoteImage(1,true);
@@ -134,11 +147,16 @@ function SortImages(){
 function HideLoader(){
     document.getElementById("lc-id").style.display = "none";
     
+    if(!revealed){
+        FadeInReveal("reveal_fade_in",0.3);
+        RevealSVGAnim(0,true);
+    }
 
     mainControl = true;
-    target_fadeTintVal = [0.091,0.051,0.061];
-    target_mainTintVal = [1.0,1.0,1.0]
+    target_fadeTintVal = revealed ? Json_fadeTint : Json_revealFadeTint;
+    target_mainTintVal = revealed ? Json_mainTint : Json_revealMainTint;
     target_fullBlurVal = 0.0;
+    console.log("Hide Loader");
     if(loadIntro && revealed)
         PlayIntroVideo();
 }
@@ -756,6 +774,10 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
             }
         }
 
+        if(!revealed && mainControl){
+            let rev_t = Clamp(revealProgress * 4,0.0,1.0);
+            target_mainTintVal = Lerp3(Json_revealMainTint,Json_mainTint,rev_t);
+        }
         let updateColour = fadeTintVal[0] < target_fadeTintVal[0] - 0.001 || fadeTintVal[0] > target_fadeTintVal[0] + 0.001
                         || mainTintVal[0] < target_mainTintVal[0] - 0.001 || mainTintVal[0] > target_mainTintVal[0] + 0.001
                         || fullBlurVal < target_fullBlurVal - 0.001 || fullBlurVal > target_fullBlurVal + 0.001
@@ -922,13 +944,78 @@ function FOVClamp(fov){
     return [clampX,clampY]; // [3600,475] 
 }
 
+function FadeInReveal(animName,speed){
+    let revealHolder = document.getElementById('reveal-cont-id');
+    revealHolder.style.animation = animName;
+    revealHolder.style.animationTimingFunction = "linear";
+    revealHolder.style.animationFillMode = "both";
+    revealHolder.style.animationDuration = speed.toString() + "s";
+}
+
+function RevealSVGAnim(animID,or){
+    currentRevealObject = document.getElementById("rev-obj-id");
+    if(!mainRevealFinished)
+        return;
+    if(currentRevealObject.contentDocument.tl != undefined && !or){
+        if(currentRevealObject.contentDocument.tl.state() == 'running')
+            return;
+    }
+    switch(animID){
+        case 0:
+            currentRevealObject.contentDocument.wobbleNSFW();
+            break;
+        case 1:
+            currentRevealObject.contentDocument.playNSFW();
+            //playedRevealMain = false;
+            mainRevealFinished = false;
+
+            FadeInReveal("reveal_fade_stay",0.13);
+
+            currentRevealObject.contentDocument.tl.onfinish = function(){
+                console.log("ANIMATION FINISH =========================");
+                if(revealed){
+                    document.getElementById('reveal-cont-id').style.display = "none";
+                }
+                mainRevealFinished = true;
+                if(needsToResetReveal && !inputting){
+                    FadeInReveal("reveal_fade_in",0.3);
+                    RevealSVGAnim(0,true);
+                }
+                needsToResetReveal = false;
+            }
+            break;
+    }
+}
+
+async function SetPageJSONParams(){
+    const response = await fetch('./Story/DemoStory.json');
+    const Jdata = await response.json();
+    const pageData = await Jdata.pages[0];
+
+    let pageIsReveal = pageData.rating > 0;
+    revealed = !pageIsReveal;
+    revealProgress = pageIsReveal ? 0 : 2;
+    target_revealProgress = pageIsReveal ? 0 : 2;
+
+    Json_loadingMainTint = pageData.loadingMainTint;
+    Json_loadingFadeTint = pageData.loadingFadeTint;
+    Json_revealMainTint = pageData.revealMainTint;
+    Json_revealFadeTint = pageData.revealFadeTint;
+    Json_mainTint = pageData.mainTint;
+    Json_fadeTint = pageData.fadeTint;
+
+    console.log(pageData.paraText);
+}
 
 // --------------- DEBUG
 
 function DB_0(){
     state = 0;
     if(!hasInit){
-        LoadRenderer();
+        SetPageJSONParams().then(() => {
+            console.log("Loaded JSON values");
+            LoadRenderer();
+        });
         console.log("Init Renderer Button");
     }
 }
@@ -938,16 +1025,13 @@ function DB_1(){
     
     //target_fullBlurVal = 1.0;
     //state = 1;
-    let revealObj = document.getElementById("rev-obj-id");
-    revealObj.contentDocument.wobbleNSFW();
+    
 }
 
 function DB_2(){
     //state = 2;
+
     
-    let revealObj = document.getElementById("rev-obj-id");
-    //console.log(revealObj.contentDocument.playNSFW);
-    revealObj.contentDocument.playNSFW();
 }
 
 function DB_3(){
