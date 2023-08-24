@@ -126,6 +126,7 @@ body {
     padding-top: 10px;
     padding-bottom: 15px;
     margin-right: 35px;
+    margin-bottom: 15px;
 }
 
 .pause-svg-cont {
@@ -296,15 +297,17 @@ input[type=range]:focus::-moz-range-track {
     bottom: 0;
     width: 60px;
     height: 300px;
+    margin-bottom: 4px;
     /* background-color: rgb(217, 255, 0, 0.5); */
 }
 
 #svg5803 {
-    width: auto;
-    height: 100%;
+    /* width: auto;
+    height: 100%; */
 }
-#path5649 {
+#cont2 {
     fill: rgba(255, 255, 255, 0.1) !important;
+    
 }
 
 
