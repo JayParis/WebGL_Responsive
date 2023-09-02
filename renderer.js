@@ -1042,6 +1042,10 @@ async function SetPageJSONParams(){
     revealed = !pageIsReveal;
     revealProgress = pageIsReveal ? 0 : 2;
     target_revealProgress = pageIsReveal ? 0 : 2;
+    if(pageIsReveal){
+        let rev_o = document.getElementById('rev-obj-id');
+        rev_o.data = './SVGs/Reveals/reveal-' + pageData.rating.toString() + '.svg';
+    }
 
     Json_loadingMainTint = pageData.loadingMainTint;
     Json_loadingFadeTint = pageData.loadingFadeTint;
@@ -1082,7 +1086,9 @@ function DB_1(){
 function DB_2(){
     //state = 2;
 
-    
+    let rev_o = document.getElementById('rev-obj-id');
+    rev_o.data = './SVGs/Reveals/ph-reveal-9.svg';
+    console.log(rev_o.data);
 }
 
 function DB_3(){
