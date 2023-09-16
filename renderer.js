@@ -27,9 +27,9 @@ var preLoadEqui = false;
 var equiReady = false;
 var equiTime = 0;
 
-var camFov = 35.6; // 35.6
+var camFov = 31.0178; // 35.6
 var target_camFov = 51.6; // 35.6
-var initial_camFov = 35.6; // 35.6
+var initial_camFov = 31.0178; // 35.6
 var fovGrowSpeed = 0;
 var target_xRot = 0;
 var target_yRot = 0;
@@ -37,7 +37,7 @@ var xRot = 0;
 var yRot = 0;
 
 const _supabaseUrl = 'https://cfzcrwfmlxquedvdajiw.supabase.co';
-var _storyUrl = '/storage/v1/object/public/main-pages/Sy79ca1a1f537259a7';
+var _storyUrl = '/storage/v1/object/public/main-pages/Sy6aad573479e16e18';
 
 var mainControl = false;
 var updatingUniforms = false;
@@ -614,7 +614,8 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
                     rebindBuffer = true;
                 };
                 equiImage.crossOrigin = "anonymous";
-                let imgPath = _supabaseUrl + _storyUrl + ('/P'+currentPage.toString()) + '/Eq/Eq_' + "1".padStart(4,'0') + '.webp';
+                let equiIndex = (vID+1).toString();
+                let imgPath = _supabaseUrl + _storyUrl + ('/P'+currentPage.toString()) + '/Eq/Eq_' + equiIndex.padStart(4,'0') + '.webp';
                 console.log(imgPath);
                 equiImage.src = imgPath;
             }
@@ -917,7 +918,7 @@ function setupVideo(url) {
 }
 
 function setVideo(videoID, isIntro){
-    //return;
+    return;
     //let vidURL = isIntro ? 'https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/IntroVideoV2_P10001-0120.mp4' 
     //: 'https://cfzcrwfmlxquedvdajiw.supabase.co/storage/v1/object/public/main-pages/Video/Video_F0001_1500.mp4';
 
