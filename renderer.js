@@ -1081,7 +1081,7 @@ function DB_1(){
     
     //target_fullBlurVal = 1.0;
     //state = 1;
-    
+    window.open("https://google.com","_self");
 }
 
 function DB_2(){

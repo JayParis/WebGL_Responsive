@@ -4,7 +4,7 @@
             "paraText": "This is demo text",
             "initalEquiFoV": 35.6,
             "targetEquiFov": 60,
-            "rating": 11,
+            "rating": 7,
             "isBlaze": true,
 
             "loadingMainTint": [0.25,0.25,0.25],
