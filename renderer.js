@@ -859,6 +859,12 @@ var InitRenderer = function(mainVertexShaderText, equiVertexShaderText, fragment
         requestAnimationFrame(render);
     }
     requestAnimationFrame(render);
+
+    window.addEventListener("keydown", (event) => {
+        if (event.key === 't') {
+            console.log(gl);
+        }
+    });
     
     if(!remoteLoad){
         loadImageURLs();
@@ -1066,6 +1072,7 @@ async function SetPageJSONParams(){
 // --------------- DEBUG
 
 function DB_0(){
+    return;
     state = 0;
     if(!hasInit){
         SetPageJSONParams().then(() => {
@@ -1077,6 +1084,7 @@ function DB_0(){
 }
 
 function DB_1(){
+    return;
     //console.log(videoElement);
     
     //target_fullBlurVal = 1.0;
@@ -1085,6 +1093,7 @@ function DB_1(){
 }
 
 function DB_2(){
+    return;
     //state = 2;
 
     let rev_o = document.getElementById('rev-obj-id');
@@ -1093,6 +1102,7 @@ function DB_2(){
 }
 
 function DB_3(){
+    return;
     state = 0;
     HQ = true;
     //loadIntro = true;
@@ -1100,6 +1110,7 @@ function DB_3(){
 }
 
 function DB_4(){
+    return;
     vID = imageList.length - 1;
     console.log(vID);
     console.log(imageList[vID]);
